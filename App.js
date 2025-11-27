@@ -7,7 +7,7 @@ import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_AREA_HEIGHT = 100; // Space at bottom for swiping
+const SWIPE_AREA_HEIGHT = 45; // Space at bottom for swiping (90% of 50px to show full bottom row)
 
 export default function App() {
   const {
@@ -115,11 +115,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#ddd',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   swipeAreaText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#666',
     textAlign: 'center',
+    paddingHorizontal: 10,
   },
   overlay: {
     position: 'absolute',
