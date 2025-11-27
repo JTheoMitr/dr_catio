@@ -1,0 +1,342 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { GRID_WIDTH, GRID_HEIGHT, STARTING_CAT_COUNT, CATS_PER_LEVEL, BASE_SCORE_PER_CAT, MULTIPLIER_PER_ADDITIONAL_CAT, GAME_STATES } from '../constants/GameConstants';
+import {
+  generateFishTreat,
+  generateRandomCats,
+  canPlaceFishTreat,
+  rotateFishTreat,
+  findMatches,
+  clearMatches,
+  applyGravity,
+  isGameOver,
+  isLevelComplete,
+} from '../utils/gameLogic';
+
+const FALL_INTERVAL = 1000; // 1 second per fall
+
+const useGameState = () => {
+  const [grid, setGrid] = useState(() => {
+    const newGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
+    return newGrid;
+  });
+  
+  const [currentTreat, setCurrentTreat] = useState(null);
+  const [treatPosition, setTreatPosition] = useState(null);
+  const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [gameState, setGameState] = useState(GAME_STATES.PLAYING);
+  const [particles, setParticles] = useState([]);
+  
+  const fallTimerRef = useRef(null);
+  const gravityTimerRef = useRef(null);
+  const gridRef = useRef(grid);
+  const currentTreatRef = useRef(currentTreat);
+  const treatPositionRef = useRef(treatPosition);
+  
+  // Keep refs in sync
+  useEffect(() => {
+    gridRef.current = grid;
+  }, [grid]);
+  
+  useEffect(() => {
+    currentTreatRef.current = currentTreat;
+  }, [currentTreat]);
+  
+  useEffect(() => {
+    treatPositionRef.current = treatPosition;
+  }, [treatPosition]);
+
+  // Initialize game
+  const initializeLevel = useCallback((levelNum) => {
+    const newGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
+    const catCount = STARTING_CAT_COUNT + (levelNum - 1) * CATS_PER_LEVEL;
+    const cats = generateRandomCats(catCount);
+    
+    cats.forEach(cat => {
+      newGrid[cat.row][cat.col] = {
+        type: 'cat',
+        color: cat.color,
+      };
+    });
+    
+    setGrid(newGrid);
+    setCurrentTreat(generateFishTreat());
+    setTreatPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
+    setGameState(GAME_STATES.PLAYING);
+  }, []);
+
+  // Place treat on grid
+  const placeTreat = useCallback((treat, position, currentGrid) => {
+    if (!treat || !position) return;
+    
+    const newGrid = currentGrid.map(row => [...row]);
+    const treatPositions = getTreatPositions(treat, position.row, position.col);
+    
+    treatPositions.forEach(({ row, col, isTop }) => {
+      newGrid[row][col] = {
+        type: 'treat',
+        color: isTop ? treat.top : treat.bottom,
+      };
+    });
+    
+    setGrid(newGrid);
+    setCurrentTreat(generateFishTreat());
+    setTreatPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
+    
+    // Check for matches
+    checkMatches(newGrid);
+  }, []);
+
+  // Get treat positions
+  const getTreatPositions = (treat, row, col) => {
+    const positions = [];
+    if (treat.rotation === 0) {
+      positions.push({ row, col, isTop: true });
+      positions.push({ row, col: col + 1, isTop: false });
+    } else {
+      positions.push({ row, col, isTop: true });
+      positions.push({ row: row + 1, col, isTop: false });
+    }
+    return positions;
+  };
+
+  // Check for matches and clear them
+  const checkMatches = useCallback((gridToCheck) => {
+    let currentGrid = gridToCheck.map(row => [...row]);
+    let totalCatsFed = 0;
+    let allMatches = [];
+    const matchColors = new Map(); // Store colors for particles
+    
+    // Keep checking for matches until no more are found
+    while (true) {
+      const matches = findMatches(currentGrid);
+      if (matches.length === 0) break;
+      
+      // Store colors before clearing
+      matches.forEach(({ row, col }) => {
+        const cell = currentGrid[row][col];
+        if (cell) {
+          const key = `${row}-${col}`;
+          matchColors.set(key, cell.color);
+        }
+      });
+      
+      allMatches = [...allMatches, ...matches];
+      const result = clearMatches(currentGrid, matches);
+      currentGrid = result.grid;
+      totalCatsFed += result.catCount;
+      
+      // Apply gravity
+      let moved = true;
+      while (moved) {
+        const gravityResult = applyGravity(currentGrid);
+        currentGrid = gravityResult.grid;
+        moved = gravityResult.moved;
+        
+        // Check for new matches after gravity
+        const newMatches = findMatches(currentGrid);
+        if (newMatches.length > 0) {
+          newMatches.forEach(({ row, col }) => {
+            const cell = currentGrid[row][col];
+            if (cell) {
+              const key = `${row}-${col}`;
+              matchColors.set(key, cell.color);
+            }
+          });
+          allMatches = [...allMatches, ...newMatches];
+          const clearResult = clearMatches(currentGrid, newMatches);
+          currentGrid = clearResult.grid;
+          totalCatsFed += clearResult.catCount;
+        }
+      }
+    }
+    
+    setGrid(currentGrid);
+    
+    // Calculate score
+    if (totalCatsFed > 0) {
+      let turnScore = BASE_SCORE_PER_CAT * totalCatsFed;
+      if (totalCatsFed > 1) {
+        turnScore = Math.floor(turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_CAT, totalCatsFed - 1));
+      }
+      setScore(prev => prev + turnScore);
+      
+      // Add particle effects (using approximate cell size, will be adjusted in component)
+      const newParticles = allMatches.map(match => {
+        const key = `${match.row}-${match.col}`;
+        return {
+          id: Date.now() + Math.random(),
+          position: { row: match.row, col: match.col },
+          color: matchColors.get(key) || 'red',
+        };
+      });
+      setParticles(prev => [...prev, ...newParticles]);
+      
+      console.log(`Cats fed: ${totalCatsFed}, Score: ${turnScore}`);
+    }
+    
+    // Check level complete
+    if (isLevelComplete(currentGrid)) {
+      console.log('Level complete!');
+      setGameState(GAME_STATES.LEVEL_COMPLETE);
+    }
+    
+    // Check game over
+    if (isGameOver(currentGrid)) {
+      console.log('Game over!');
+      setGameState(GAME_STATES.GAME_OVER);
+    }
+  }, []);
+
+  // Move treat left
+  const moveLeft = useCallback(() => {
+    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    
+    const newCol = treatPosition.col - 1;
+    if (canPlaceFishTreat(grid, currentTreat, treatPosition.row, newCol)) {
+      setTreatPosition({ ...treatPosition, col: newCol });
+      console.log('Piece moved left');
+    }
+  }, [currentTreat, treatPosition, grid, gameState]);
+
+  // Move treat right
+  const moveRight = useCallback(() => {
+    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    
+    const newCol = treatPosition.col + 1;
+    if (canPlaceFishTreat(grid, currentTreat, treatPosition.row, newCol)) {
+      setTreatPosition({ ...treatPosition, col: newCol });
+      console.log('Piece moved right');
+    }
+  }, [currentTreat, treatPosition, grid, gameState]);
+
+  // Rotate treat
+  const rotate = useCallback(() => {
+    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    
+    const rotated = rotateFishTreat(currentTreat);
+    const currentRow = treatPosition.row;
+    const currentCol = treatPosition.col;
+    
+    // Try to place at current position
+    if (canPlaceFishTreat(grid, rotated, currentRow, currentCol)) {
+      setCurrentTreat(rotated);
+      console.log(`Piece rotated: ${currentTreat.rotation} -> ${rotated.rotation}`);
+      return;
+    }
+    
+    // If rotation would cause collision, try shifting left/right for horizontal->vertical
+    // or up for vertical->horizontal
+    if (rotated.rotation === 1) {
+      // Rotating to vertical - try shifting left
+      if (canPlaceFishTreat(grid, rotated, currentRow, currentCol - 1)) {
+        setCurrentTreat(rotated);
+        setTreatPosition({ ...treatPosition, col: currentCol - 1 });
+        console.log('Piece rotated (shifted left)');
+        return;
+      }
+      // Try shifting right
+      if (canPlaceFishTreat(grid, rotated, currentRow, currentCol + 1)) {
+        setCurrentTreat(rotated);
+        setTreatPosition({ ...treatPosition, col: currentCol + 1 });
+        console.log('Piece rotated (shifted right)');
+        return;
+      }
+    } else {
+      // Rotating to horizontal - try shifting up
+      if (canPlaceFishTreat(grid, rotated, currentRow - 1, currentCol)) {
+        setCurrentTreat(rotated);
+        setTreatPosition({ ...treatPosition, row: currentRow - 1 });
+        console.log('Piece rotated (shifted up)');
+        return;
+      }
+    }
+    
+    console.log('Piece rotation blocked');
+  }, [currentTreat, treatPosition, grid, gameState]);
+
+  // Drop treat
+  const drop = useCallback(() => {
+    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    
+    setGrid(currentGrid => {
+      let newRow = treatPosition.row;
+      while (canPlaceFishTreat(currentGrid, currentTreat, newRow + 1, treatPosition.col)) {
+        newRow++;
+      }
+      
+      // Place the treat at the final position
+      placeTreat(currentTreat, { ...treatPosition, row: newRow }, currentGrid);
+      return currentGrid;
+    });
+    
+    console.log('Piece dropped');
+  }, [currentTreat, treatPosition, gameState, placeTreat]);
+
+  // Fall timer
+  useEffect(() => {
+    if (gameState !== GAME_STATES.PLAYING) return;
+    
+    fallTimerRef.current = setInterval(() => {
+      const currentGrid = gridRef.current;
+      const currentTreat = currentTreatRef.current;
+      const currentPos = treatPositionRef.current;
+      
+      if (!currentTreat || !currentPos) return;
+      
+      // Move straight down: increase row, keep col the same
+      const nextRow = currentPos.row + 1;
+      const sameCol = currentPos.col;
+      
+      if (canPlaceFishTreat(currentGrid, currentTreat, nextRow, sameCol)) {
+        setTreatPosition({ row: nextRow, col: sameCol });
+      } else {
+        // Can't move down, place the treat
+        placeTreat(currentTreat, currentPos, currentGrid);
+      }
+    }, FALL_INTERVAL);
+    
+    return () => {
+      if (fallTimerRef.current) {
+        clearInterval(fallTimerRef.current);
+      }
+    };
+  }, [gameState, placeTreat]);
+
+  // Initialize first level
+  useEffect(() => {
+    initializeLevel(1);
+  }, [initializeLevel]);
+
+  // Next level
+  const nextLevel = useCallback(() => {
+    const newLevel = level + 1;
+    setLevel(newLevel);
+    initializeLevel(newLevel);
+  }, [level, initializeLevel]);
+
+  // Remove particle after animation
+  const removeParticle = useCallback((id) => {
+    setParticles(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  return {
+    grid,
+    currentTreat,
+    treatPosition,
+    score,
+    level,
+    gameState,
+    particles,
+    moveLeft,
+    moveRight,
+    rotate,
+    drop,
+    nextLevel,
+    removeParticle,
+    initializeLevel,
+  };
+};
+
+export default useGameState;
+
