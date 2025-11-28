@@ -12,7 +12,7 @@ export const generateFishTreat = () => {
   return {
     top: color1,
     bottom: color2,
-    rotation: 0, // 0 = horizontal (top-left, top-right), 1 = vertical (top, bottom)
+    rotation: 0, // 0 = 0° (horizontal left-right), 1 = 90° (vertical top-bottom), 2 = 180° (horizontal right-left), 3 = 270° (vertical bottom-top)
   };
 };
 
@@ -54,14 +54,27 @@ export const isEmpty = (grid, row, col) => {
 export const getFishTreatPositions = (treat, row, col) => {
   const positions = [];
   
+  // 0°: horizontal, left-right (top color on left, bottom color on right)
+  // 90°: vertical, top-bottom (top color on top, bottom color on bottom)
+  // 180°: horizontal, right-left (top color on right, bottom color on left) - flipped
+  // 270°: vertical, bottom-top (top color on bottom, bottom color on top) - flipped
+  
   if (treat.rotation === 0) {
     // Horizontal: left and right
     positions.push({ row, col });
     positions.push({ row, col: col + 1 });
-  } else {
+  } else if (treat.rotation === 1) {
     // Vertical: top and bottom
     positions.push({ row, col });
     positions.push({ row: row + 1, col });
+  } else if (treat.rotation === 2) {
+    // Horizontal: right and left (flipped)
+    positions.push({ row, col: col + 1 });
+    positions.push({ row, col });
+  } else if (treat.rotation === 3) {
+    // Vertical: bottom and top (flipped)
+    positions.push({ row: row + 1, col });
+    positions.push({ row, col });
   }
   
   return positions;
@@ -80,11 +93,11 @@ export const canPlaceFishTreat = (grid, treat, row, col) => {
   return true;
 };
 
-// Rotate fish treat
+// Rotate fish treat (cycles through 0°, 90°, 180°, 270°)
 export const rotateFishTreat = (treat) => {
   return {
     ...treat,
-    rotation: treat.rotation === 0 ? 1 : 0,
+    rotation: (treat.rotation + 1) % 4,
   };
 };
 

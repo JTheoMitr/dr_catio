@@ -64,14 +64,27 @@ const GameGrid = ({ grid, currentTreat, treatPosition, particles, onRemovePartic
 const getTreatPositions = (treat, row, col) => {
   const positions = [];
   
+  // 0°: horizontal, left-right (top color on left, bottom color on right)
+  // 90°: vertical, top-bottom (top color on top, bottom color on bottom)
+  // 180°: horizontal, right-left (top color on right, bottom color on left) - flipped
+  // 270°: vertical, bottom-top (top color on bottom, bottom color on top) - flipped
+  
   if (treat.rotation === 0) {
     // Horizontal: left and right
     positions.push({ row, col, isTop: true });
     positions.push({ row, col: col + 1, isTop: false });
-  } else {
+  } else if (treat.rotation === 1) {
     // Vertical: top and bottom
     positions.push({ row, col, isTop: true });
     positions.push({ row: row + 1, col, isTop: false });
+  } else if (treat.rotation === 2) {
+    // Horizontal: right and left (flipped)
+    positions.push({ row, col: col + 1, isTop: true });
+    positions.push({ row, col, isTop: false });
+  } else if (treat.rotation === 3) {
+    // Vertical: bottom and top (flipped)
+    positions.push({ row: row + 1, col, isTop: true });
+    positions.push({ row, col, isTop: false });
   }
   
   return positions;

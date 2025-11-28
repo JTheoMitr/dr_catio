@@ -90,13 +90,30 @@ const useGameState = () => {
   // Get treat positions
   const getTreatPositions = (treat, row, col) => {
     const positions = [];
+    
+    // 0°: horizontal, left-right (top color on left, bottom color on right)
+    // 90°: vertical, top-bottom (top color on top, bottom color on bottom)
+    // 180°: horizontal, right-left (top color on right, bottom color on left) - flipped
+    // 270°: vertical, bottom-top (top color on bottom, bottom color on top) - flipped
+    
     if (treat.rotation === 0) {
+      // Horizontal: left and right
       positions.push({ row, col, isTop: true });
       positions.push({ row, col: col + 1, isTop: false });
-    } else {
+    } else if (treat.rotation === 1) {
+      // Vertical: top and bottom
       positions.push({ row, col, isTop: true });
       positions.push({ row: row + 1, col, isTop: false });
+    } else if (treat.rotation === 2) {
+      // Horizontal: right and left (flipped)
+      positions.push({ row, col: col + 1, isTop: true });
+      positions.push({ row, col, isTop: false });
+    } else if (treat.rotation === 3) {
+      // Vertical: bottom and top (flipped)
+      positions.push({ row: row + 1, col, isTop: true });
+      positions.push({ row, col, isTop: false });
     }
+    
     return positions;
   };
 
@@ -136,11 +153,35 @@ const useGameState = () => {
       currentGrid = result.grid;
       totalCatsFed += result.catCount;
       
+      // After clearing, ensure all columns with blocks that can fall are included
+      // This catches orphaned blocks (the other half of a treat)
+      for (let col = 0; col < GRID_WIDTH; col++) {
+        for (let row = 0; row < GRID_HEIGHT - 1; row++) {
+          const cell = currentGrid[row][col];
+          // If there's a block with empty space below it, and this column is adjacent to affected columns
+          // or is already affected, ensure it's processed
+          if (cell && cell.type === 'treat' && currentGrid[row + 1][col] === null) {
+            // Check if this column is adjacent to any affected column
+            const isAdjacent = Array.from(affectedColumns).some(affectedCol => 
+              Math.abs(col - affectedCol) <= 1
+            );
+            if (isAdjacent) {
+              affectedColumns.add(col);
+            }
+          }
+        }
+      }
+      
       // Apply gravity only to affected columns (where cells were cleared)
       // This will make any blocks above the cleared area fall, including
-      // the other half of a treat if only one half was cleared
+      // orphaned blocks (the other half of a treat if only one half was cleared)
+      // The gravity loop continues until no more blocks can fall
       let moved = true;
-      while (moved) {
+      let gravityIterations = 0;
+      const maxGravityIterations = GRID_HEIGHT * 2; // Safety limit
+      
+      while (moved && gravityIterations < maxGravityIterations) {
+        gravityIterations++;
         const gravityResult = applyGravity(currentGrid, Array.from(affectedColumns));
         currentGrid = gravityResult.grid;
         moved = gravityResult.moved;

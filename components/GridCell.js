@@ -1,6 +1,22 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { COLORS } from '../constants/GameConstants';
+
+// Import your pixel art assets
+// Update these paths to match your actual asset filenames
+const fishTreatAssets = {
+  [COLORS.RED]: require('../assets/fish-treat-red.png'),
+  [COLORS.YELLOW]: require('../assets/fish-treat-yellow.png'),
+  [COLORS.GREEN]: require('../assets/fish-treat-green.png'),
+  [COLORS.BLUE]: require('../assets/fish-treat-blue.png'),
+};
+
+const catHeadAssets = {
+  [COLORS.RED]: require('../assets/cat-head-red.png'),
+  [COLORS.YELLOW]: require('../assets/cat-head-yellow.png'),
+  [COLORS.GREEN]: require('../assets/cat-head-green.png'),
+  [COLORS.BLUE]: require('../assets/cat-head-blue.png'),
+};
 
 const GridCell = ({ cell, size }) => {
   const cellStyle = { width: size, height: size };
@@ -9,26 +25,39 @@ const GridCell = ({ cell, size }) => {
     return <View style={[styles.cell, cellStyle]} pointerEvents="none" />;
   }
 
-  const colorMap = {
-    [COLORS.RED]: '#FF4444',
-    [COLORS.YELLOW]: '#FFD700',
-    [COLORS.GREEN]: '#44FF44',
-    [COLORS.BLUE]: '#4444FF',
-  };
-
-  const backgroundColor = colorMap[cell.color] || '#999';
-
   if (cell.type === 'cat') {
-    // Cat head: colored circle
+    // Cat head: use pixel art image
+    const catImage = catHeadAssets[cell.color];
     return (
       <View style={[styles.cell, cellStyle, { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="none">
-        <View style={[styles.catHead, { width: size * 0.7, height: size * 0.7, borderRadius: size * 0.35, backgroundColor }]} />
+        {catImage ? (
+          <Image 
+            source={catImage} 
+            style={{ width: size * 0.7, height: size * 0.7 }} 
+            resizeMode="contain"
+          />
+        ) : (
+          // Fallback to colored circle if image not found
+          <View style={[styles.catHead, { width: size * 0.7, height: size * 0.7, borderRadius: size * 0.35, backgroundColor: '#999' }]} />
+        )}
       </View>
     );
   } else {
-    // Fish treat: colored block
+    // Fish treat: use pixel art image
+    const treatImage = fishTreatAssets[cell.color];
     return (
-      <View style={[styles.cell, styles.treat, cellStyle, { backgroundColor }]} pointerEvents="none" />
+      <View style={[styles.cell, cellStyle]} pointerEvents="none">
+        {treatImage ? (
+          <Image 
+            source={treatImage} 
+            style={cellStyle} 
+            resizeMode="contain"
+          />
+        ) : (
+          // Fallback to colored block if image not found
+          <View style={[styles.treat, cellStyle, { backgroundColor: '#999' }]} />
+        )}
+      </View>
     );
   }
 };
