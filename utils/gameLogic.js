@@ -94,22 +94,30 @@ export const findMatches = (grid) => {
   
   // Check horizontal matches
   for (let row = 0; row < GRID_HEIGHT; row++) {
-    let count = 0;
+    let startCol = 0;
     let currentColor = null;
+    let count = 0;
     
     for (let col = 0; col < GRID_WIDTH; col++) {
       const cell = grid[row][col];
-      if (cell && cell.color === currentColor) {
+      const cellColor = cell ? cell.color : null;
+      
+      if (cellColor === currentColor && currentColor !== null) {
+        // Continue the sequence
         count++;
       } else {
-        if (count >= 4 && currentColor) {
-          // Found a match
-          for (let i = col - count; i < col; i++) {
+        // Sequence ended or changed
+        if (count >= 4 && currentColor !== null) {
+          // Found a match - mark all cells in the sequence
+          for (let i = startCol; i < startCol + count; i++) {
             matches.add(`${row}-${i}`);
           }
         }
-        if (cell) {
-          currentColor = cell.color;
+        
+        // Start new sequence
+        if (cellColor !== null) {
+          currentColor = cellColor;
+          startCol = col;
           count = 1;
         } else {
           currentColor = null;
@@ -118,9 +126,9 @@ export const findMatches = (grid) => {
       }
     }
     
-    // Check end of row
-    if (count >= 4 && currentColor) {
-      for (let i = GRID_WIDTH - count; i < GRID_WIDTH; i++) {
+    // Check if there's a match at the end of the row
+    if (count >= 4 && currentColor !== null) {
+      for (let i = startCol; i < startCol + count; i++) {
         matches.add(`${row}-${i}`);
       }
     }
@@ -128,22 +136,30 @@ export const findMatches = (grid) => {
   
   // Check vertical matches
   for (let col = 0; col < GRID_WIDTH; col++) {
-    let count = 0;
+    let startRow = 0;
     let currentColor = null;
+    let count = 0;
     
     for (let row = 0; row < GRID_HEIGHT; row++) {
       const cell = grid[row][col];
-      if (cell && cell.color === currentColor) {
+      const cellColor = cell ? cell.color : null;
+      
+      if (cellColor === currentColor && currentColor !== null) {
+        // Continue the sequence
         count++;
       } else {
-        if (count >= 4 && currentColor) {
-          // Found a match
-          for (let i = row - count; i < row; i++) {
+        // Sequence ended or changed
+        if (count >= 4 && currentColor !== null) {
+          // Found a match - mark all cells in the sequence
+          for (let i = startRow; i < startRow + count; i++) {
             matches.add(`${i}-${col}`);
           }
         }
-        if (cell) {
-          currentColor = cell.color;
+        
+        // Start new sequence
+        if (cellColor !== null) {
+          currentColor = cellColor;
+          startRow = row;
           count = 1;
         } else {
           currentColor = null;
@@ -152,9 +168,9 @@ export const findMatches = (grid) => {
       }
     }
     
-    // Check end of column
-    if (count >= 4 && currentColor) {
-      for (let i = GRID_HEIGHT - count; i < GRID_HEIGHT; i++) {
+    // Check if there's a match at the end of the column
+    if (count >= 4 && currentColor !== null) {
+      for (let i = startRow; i < startRow + count; i++) {
         matches.add(`${i}-${col}`);
       }
     }
@@ -182,15 +198,25 @@ export const clearMatches = (grid, matches) => {
   return { grid: newGrid, catCount };
 };
 
-// Apply gravity (make blocks fall)
-export const applyGravity = (grid) => {
+// Apply gravity (make blocks fall) - only in specified columns, only moves blocks (not circles)
+export const applyGravity = (grid, affectedColumns = null) => {
   const newGrid = grid.map(row => [...row]);
   let moved = false;
+  
+  // Determine which columns to process
+  const columnsToProcess = affectedColumns 
+    ? new Set(affectedColumns) 
+    : new Set(Array.from({ length: GRID_WIDTH }, (_, i) => i));
   
   // Start from bottom and work up
   for (let row = GRID_HEIGHT - 2; row >= 0; row--) {
     for (let col = 0; col < GRID_WIDTH; col++) {
-      if (newGrid[row][col] && newGrid[row + 1][col] === null) {
+      // Only process affected columns
+      if (!columnsToProcess.has(col)) continue;
+      
+      const cell = newGrid[row][col];
+      // Only move blocks (fish treats), never circles (cats)
+      if (cell && cell.type === 'treat' && newGrid[row + 1][col] === null) {
         // Move block down
         newGrid[row + 1][col] = newGrid[row][col];
         newGrid[row][col] = null;

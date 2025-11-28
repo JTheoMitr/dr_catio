@@ -106,11 +106,21 @@ const useGameState = () => {
     let totalCatsFed = 0;
     let allMatches = [];
     const matchColors = new Map(); // Store colors for particles
+    const affectedColumns = new Set(); // Track which columns had cells cleared
     
     // Keep checking for matches until no more are found
     while (true) {
       const matches = findMatches(currentGrid);
       if (matches.length === 0) break;
+      
+      // Track ALL columns where cells will be cleared (important for treats spanning columns)
+      // Also include adjacent columns to catch orphaned treat pieces (other half of a treat)
+      matches.forEach(({ col }) => {
+        affectedColumns.add(col);
+        // Include adjacent columns to catch the other half of treats that span columns
+        if (col > 0) affectedColumns.add(col - 1);
+        if (col < GRID_WIDTH - 1) affectedColumns.add(col + 1);
+      });
       
       // Store colors before clearing
       matches.forEach(({ row, col }) => {
@@ -126,27 +136,44 @@ const useGameState = () => {
       currentGrid = result.grid;
       totalCatsFed += result.catCount;
       
-      // Apply gravity
+      // Apply gravity only to affected columns (where cells were cleared)
+      // This will make any blocks above the cleared area fall, including
+      // the other half of a treat if only one half was cleared
       let moved = true;
       while (moved) {
-        const gravityResult = applyGravity(currentGrid);
+        const gravityResult = applyGravity(currentGrid, Array.from(affectedColumns));
         currentGrid = gravityResult.grid;
         moved = gravityResult.moved;
         
-        // Check for new matches after gravity
+        // Check for new matches after gravity (only in affected columns)
         const newMatches = findMatches(currentGrid);
         if (newMatches.length > 0) {
-          newMatches.forEach(({ row, col }) => {
-            const cell = currentGrid[row][col];
-            if (cell) {
-              const key = `${row}-${col}`;
-              matchColors.set(key, cell.color);
+          // Track columns of new matches
+          const newAffectedColumns = new Set();
+          newMatches.forEach(({ col }) => {
+            if (affectedColumns.has(col)) {
+              newAffectedColumns.add(col);
             }
           });
-          allMatches = [...allMatches, ...newMatches];
-          const clearResult = clearMatches(currentGrid, newMatches);
-          currentGrid = clearResult.grid;
-          totalCatsFed += clearResult.catCount;
+          
+          if (newAffectedColumns.size > 0) {
+            // Add any new affected columns from cascading matches
+            newMatches.forEach(({ col }) => {
+              affectedColumns.add(col);
+            });
+            
+            newMatches.forEach(({ row, col }) => {
+              const cell = currentGrid[row][col];
+              if (cell) {
+                const key = `${row}-${col}`;
+                matchColors.set(key, cell.color);
+              }
+            });
+            allMatches = [...allMatches, ...newMatches];
+            const clearResult = clearMatches(currentGrid, newMatches);
+            currentGrid = clearResult.grid;
+            totalCatsFed += clearResult.catCount;
+          }
         }
       }
     }
