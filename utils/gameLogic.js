@@ -211,7 +211,56 @@ export const clearMatches = (grid, matches) => {
   return { grid: newGrid, catCount };
 };
 
+// Check if a block is part of a treat (has an adjacent treat block)
+const isPartOfTreat = (grid, row, col) => {
+  const cell = grid[row][col];
+  if (!cell || cell.type !== 'treat') return false;
+  
+  // Check for adjacent treat blocks (horizontal or vertical)
+  // Horizontal: check left and right
+  if (col > 0 && grid[row][col - 1] && grid[row][col - 1].type === 'treat') {
+    return { type: 'horizontal', partnerRow: row, partnerCol: col - 1 };
+  }
+  if (col < GRID_WIDTH - 1 && grid[row][col + 1] && grid[row][col + 1].type === 'treat') {
+    return { type: 'horizontal', partnerRow: row, partnerCol: col + 1 };
+  }
+  
+  // Vertical: check top and bottom
+  if (row > 0 && grid[row - 1][col] && grid[row - 1][col].type === 'treat') {
+    return { type: 'vertical', partnerRow: row - 1, partnerCol: col };
+  }
+  if (row < GRID_HEIGHT - 1 && grid[row + 1][col] && grid[row + 1][col].type === 'treat') {
+    return { type: 'vertical', partnerRow: row + 1, partnerCol: col };
+  }
+  
+  return false;
+};
+
+// Check if both blocks of a treat can fall together
+const canTreatFall = (grid, row1, col1, row2, col2, treatType) => {
+  // Both blocks must have empty space below them
+  if (treatType === 'horizontal') {
+    // Horizontal treat: both blocks must be able to fall in their respective columns
+    const canFall1 = row1 < GRID_HEIGHT - 1 && grid[row1 + 1][col1] === null;
+    const canFall2 = row2 < GRID_HEIGHT - 1 && grid[row2 + 1][col2] === null;
+    return canFall1 && canFall2;
+  } else {
+    // Vertical treat: the bottom block must be able to fall
+    const bottomRow = Math.max(row1, row2);
+    const topRow = Math.min(row1, row2);
+    const col = col1; // Same column for vertical
+    
+    // Bottom block must have empty space below
+    if (bottomRow >= GRID_HEIGHT - 1) return false;
+    if (grid[bottomRow + 1][col] !== null) return false;
+    
+    // Top block must be able to move into bottom block's position
+    return grid[bottomRow][col] === null || grid[bottomRow][col].type === 'treat';
+  }
+};
+
 // Apply gravity (make blocks fall) - only in specified columns, only moves blocks (not circles)
+// Treats (2-block pieces) must fall together - both blocks move or neither moves
 export const applyGravity = (grid, affectedColumns = null) => {
   const newGrid = grid.map(row => [...row]);
   let moved = false;
@@ -221,19 +270,64 @@ export const applyGravity = (grid, affectedColumns = null) => {
     ? new Set(affectedColumns) 
     : new Set(Array.from({ length: GRID_WIDTH }, (_, i) => i));
   
+  // Track which cells we've already processed (to avoid moving the same treat twice)
+  const processed = new Set();
+  
   // Start from bottom and work up
   for (let row = GRID_HEIGHT - 2; row >= 0; row--) {
     for (let col = 0; col < GRID_WIDTH; col++) {
       // Only process affected columns
       if (!columnsToProcess.has(col)) continue;
       
+      const cellKey = `${row}-${col}`;
+      if (processed.has(cellKey)) continue;
+      
       const cell = newGrid[row][col];
       // Only move blocks (fish treats), never circles (cats)
-      if (cell && cell.type === 'treat' && newGrid[row + 1][col] === null) {
-        // Move block down
-        newGrid[row + 1][col] = newGrid[row][col];
-        newGrid[row][col] = null;
-        moved = true;
+      if (cell && cell.type === 'treat') {
+        // Check if this block is part of a treat
+        const treatInfo = isPartOfTreat(newGrid, row, col);
+        
+        if (treatInfo) {
+          // This is part of a treat - both blocks must fall together
+          const { partnerRow, partnerCol, type: treatType } = treatInfo;
+          const partnerKey = `${partnerRow}-${partnerCol}`;
+          
+          // Check if both blocks can fall
+          if (canTreatFall(newGrid, row, col, partnerRow, partnerCol, treatType)) {
+            // Move both blocks together
+            if (treatType === 'horizontal') {
+              // Horizontal: move each block down in its own column
+              newGrid[row + 1][col] = newGrid[row][col];
+              newGrid[row][col] = null;
+              newGrid[partnerRow + 1][partnerCol] = newGrid[partnerRow][partnerCol];
+              newGrid[partnerRow][partnerCol] = null;
+            } else {
+              // Vertical: move the bottom block down, top block moves into bottom's position
+              const bottomRow = Math.max(row, partnerRow);
+              const topRow = Math.min(row, partnerRow);
+              const colSame = col;
+              
+              // Move bottom block down
+              newGrid[bottomRow + 1][colSame] = newGrid[bottomRow][colSame];
+              // Move top block to bottom's old position
+              newGrid[bottomRow][colSame] = newGrid[topRow][colSame];
+              newGrid[topRow][colSame] = null;
+            }
+            
+            processed.add(cellKey);
+            processed.add(partnerKey);
+            moved = true;
+          }
+        } else {
+          // Single block (not part of a treat) - can fall if space below
+          if (newGrid[row + 1][col] === null) {
+            newGrid[row + 1][col] = newGrid[row][col];
+            newGrid[row][col] = null;
+            processed.add(cellKey);
+            moved = true;
+          }
+        }
       }
     }
   }
