@@ -23,6 +23,7 @@ export default function App() {
     rotate,
     drop,
     nextLevel,
+    restartLevel,
     removeParticle,
   } = useGameState();
 
@@ -66,6 +67,9 @@ export default function App() {
             <Text style={styles.overlayTitle}>Game Over!</Text>
             <Text style={styles.overlayText}>Final Score: {score}</Text>
             <Text style={styles.overlayText}>Level Reached: {level}</Text>
+            <Text style={styles.overlayButton} onPress={restartLevel}>
+              Try Again
+            </Text>
           </View>
         </View>
       )}

@@ -383,6 +383,11 @@ const useGameState = () => {
     initializeLevel(newLevel);
   }, [level, initializeLevel]);
 
+  // Restart current level
+  const restartLevel = useCallback(() => {
+    initializeLevel(level);
+  }, [initializeLevel, level]);
+
   // Remove particle after animation
   const removeParticle = useCallback((id) => {
     setParticles(prev => prev.filter(p => p.id !== id));
@@ -401,6 +406,7 @@ const useGameState = () => {
     rotate,
     drop,
     nextLevel,
+    restartLevel,
     removeParticle,
     initializeLevel,
   };
