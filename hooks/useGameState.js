@@ -32,6 +32,7 @@ const useGameState = () => {
   const gridRef = useRef(grid);
   const currentTreatRef = useRef(currentTreat);
   const treatPositionRef = useRef(treatPosition);
+  const particleIdCounter = useRef(0);
   
   // Keep refs in sync
   useEffect(() => {
@@ -230,10 +231,10 @@ const useGameState = () => {
       setScore(prev => prev + turnScore);
       
       // Add particle effects (using approximate cell size, will be adjusted in component)
-      const newParticles = allMatches.map(match => {
+      const newParticles = allMatches.map((match, index) => {
         const key = `${match.row}-${match.col}`;
         return {
-          id: Date.now() + Math.random(),
+          id: `particle-${particleIdCounter.current++}-${match.row}-${match.col}-${index}`,
           position: { row: match.row, col: match.col },
           color: matchColors.get(key) || 'red',
         };

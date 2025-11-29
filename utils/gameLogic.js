@@ -320,9 +320,21 @@ export const applyGravity = (grid, affectedColumns = null) => {
             moved = true;
           }
         } else {
-          // Single block (not part of a treat) - can fall if space below
-          if (newGrid[row + 1][col] === null) {
-            newGrid[row + 1][col] = newGrid[row][col];
+          // Single block (not part of a treat) - fall to the lowest empty space in its column
+          // Find the lowest empty space below this block
+          let lowestEmptyRow = row;
+          for (let checkRow = row + 1; checkRow < GRID_HEIGHT; checkRow++) {
+            if (newGrid[checkRow][col] === null) {
+              lowestEmptyRow = checkRow;
+            } else {
+              // Hit something (block or circle) - stop here
+              break;
+            }
+          }
+          
+          // Move block to the lowest empty space (if it can move)
+          if (lowestEmptyRow > row) {
+            newGrid[lowestEmptyRow][col] = newGrid[row][col];
             newGrid[row][col] = null;
             processed.add(cellKey);
             moved = true;

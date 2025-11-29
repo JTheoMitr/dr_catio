@@ -5,7 +5,8 @@ import GridCell from './GridCell';
 import ParticleEffect from './ParticleEffect';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-export const CELL_SIZE = Math.floor((SCREEN_WIDTH - 40) / GRID_WIDTH); // 20px padding on each side
+const BASE_CELL_SIZE = Math.floor((SCREEN_WIDTH - 40) / GRID_WIDTH); // 20px padding on each side
+export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 0.7); // Scale down to 70%
 const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
 
 const GameGrid = ({ grid, currentTreat, treatPosition, particles, onRemoveParticle }) => {
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    flex: 1,
   },
   gridContainer: {
     position: 'relative',
