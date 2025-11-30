@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, SafeAreaView, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import GameGrid from './components/GameGrid';
 import TouchControls from './components/TouchControls';
+import AnimatedSprite from './components/AnimatedSprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_AREA_HEIGHT = 45; // Space at bottom for swiping (90% of 50px to show full bottom row)
+const MARGIN_PERCENT = 0.025; // 2.5% margin
+const MIN_MARGIN = 15; // Minimum 15px margin
+const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
 
 export default function App() {
   const {
@@ -25,7 +29,28 @@ export default function App() {
     nextLevel,
     restartLevel,
     removeParticle,
+    animationTrigger,
   } = useGameState();
+
+  const [animationType, setAnimationType] = useState('default');
+
+  // Handle animation triggers from game state
+  React.useEffect(() => {
+    if (animationTrigger) {
+      if (animationTrigger === 'match') {
+        setAnimationType('match');
+      } else if (animationTrigger === 'win') {
+        setAnimationType('win');
+      } else if (animationTrigger === 'lose') {
+        setAnimationType('lose');
+      }
+    }
+  }, [animationTrigger]);
+
+  const handleAnimationComplete = () => {
+    // Return to default animation when one-time animations finish
+    setAnimationType('default');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,7 +62,7 @@ export default function App() {
         <Text style={styles.headerText}>Score: {score}</Text>
       </View>
 
-      {/* Game Grid */}
+      {/* Game Area with Animation and Grid */}
       <TouchControls
         onMoveLeft={moveLeft}
         onMoveRight={moveRight}
@@ -45,13 +70,26 @@ export default function App() {
         onDrop={drop}
       >
         <View style={styles.gameArea}>
-          <GameGrid
-            grid={grid}
-            currentTreat={currentTreat}
-            treatPosition={treatPosition}
-            particles={particles}
-            onRemoveParticle={removeParticle}
-          />
+          <View style={styles.gameContent}>
+            {/* Animation on the left */}
+            <View style={styles.animationContainer}>
+              <AnimatedSprite 
+                animationType={animationType}
+                onAnimationComplete={handleAnimationComplete}
+              />
+            </View>
+            
+            {/* Grid on the right */}
+            <View style={styles.gridContainer}>
+              <GameGrid
+                grid={grid}
+                currentTreat={currentTreat}
+                treatPosition={treatPosition}
+                particles={particles}
+                onRemoveParticle={removeParticle}
+              />
+            </View>
+          </View>
         </View>
       </TouchControls>
 
@@ -112,6 +150,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+  },
+  gameContent: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: MARGIN,
+  },
+  animationContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: MARGIN,
+  },
+  gridContainer: {
+    flex: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   swipeArea: {
     backgroundColor: '#f9f9f9',

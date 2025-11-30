@@ -26,6 +26,7 @@ const useGameState = () => {
   const [level, setLevel] = useState(1);
   const [gameState, setGameState] = useState(GAME_STATES.PLAYING);
   const [particles, setParticles] = useState([]);
+  const [animationTrigger, setAnimationTrigger] = useState(null);
   
   const fallTimerRef = useRef(null);
   const gravityTimerRef = useRef(null);
@@ -64,6 +65,7 @@ const useGameState = () => {
     setCurrentTreat(generateFishTreat());
     setTreatPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
     setGameState(GAME_STATES.PLAYING);
+    setAnimationTrigger(null); // Reset animation trigger
   }, []);
 
   // Place treat on grid
@@ -86,6 +88,8 @@ const useGameState = () => {
     
     // Check for matches
     checkMatches(newGrid);
+    
+    return newGrid; // Return the new grid
   }, []);
 
   // Get treat positions
@@ -244,6 +248,8 @@ const useGameState = () => {
       }
       setScore(prev => prev + turnScore);
       console.log(`Cats fed: ${totalCatsFed}, Score: ${turnScore}`);
+      // Trigger match animation when cats are fed
+      setAnimationTrigger('match');
     } else if (allMatches.length > 0) {
       // Matches with no cats: award 25 points
       setScore(prev => prev + 25);
@@ -254,12 +260,14 @@ const useGameState = () => {
     if (isLevelComplete(currentGrid)) {
       console.log('Level complete!');
       setGameState(GAME_STATES.LEVEL_COMPLETE);
+      setAnimationTrigger('win');
     }
     
     // Check game over
     if (isGameOver(currentGrid)) {
       console.log('Game over!');
       setGameState(GAME_STATES.GAME_OVER);
+      setAnimationTrigger('lose');
     }
   }, []);
 
@@ -334,16 +342,17 @@ const useGameState = () => {
   const drop = useCallback(() => {
     if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
     
-    setGrid(currentGrid => {
-      let newRow = treatPosition.row;
-      while (canPlaceFishTreat(currentGrid, currentTreat, newRow + 1, treatPosition.col)) {
-        newRow++;
-      }
-      
-      // Place the treat at the final position
-      placeTreat(currentTreat, { ...treatPosition, row: newRow }, currentGrid);
-      return currentGrid;
-    });
+    // Get current grid from ref to avoid state update conflicts
+    const currentGrid = gridRef.current;
+    let newRow = treatPosition.row;
+    
+    // Find the lowest position the treat can be placed
+    while (canPlaceFishTreat(currentGrid, currentTreat, newRow + 1, treatPosition.col)) {
+      newRow++;
+    }
+    
+    // Place the treat at the final position
+    placeTreat(currentTreat, { ...treatPosition, row: newRow }, currentGrid);
     
     console.log('Piece dropped');
   }, [currentTreat, treatPosition, gameState, placeTreat]);
@@ -416,6 +425,7 @@ const useGameState = () => {
     restartLevel,
     removeParticle,
     initializeLevel,
+    animationTrigger,
   };
 };
 
