@@ -273,7 +273,8 @@ export const applyGravity = (grid, affectedColumns = null) => {
   // Track which cells we've already processed (to avoid moving the same treat twice)
   const processed = new Set();
   
-  // Start from bottom and work up
+  // FIRST PASS: Process treats (2-block pieces) from bottom to top
+  // This ensures treats fall together properly
   for (let row = GRID_HEIGHT - 2; row >= 0; row--) {
     for (let col = 0; col < GRID_WIDTH; col++) {
       // Only process affected columns
@@ -319,7 +320,28 @@ export const applyGravity = (grid, affectedColumns = null) => {
             processed.add(partnerKey);
             moved = true;
           }
-        } else {
+        }
+      }
+    }
+  }
+  
+  // SECOND PASS: Process single blocks (orphaned treat halves) from top to bottom
+  // This ensures upper blocks move first, then lower blocks can fill the gaps
+  for (let row = 0; row < GRID_HEIGHT - 1; row++) {
+    for (let col = 0; col < GRID_WIDTH; col++) {
+      // Only process affected columns
+      if (!columnsToProcess.has(col)) continue;
+      
+      const cellKey = `${row}-${col}`;
+      if (processed.has(cellKey)) continue;
+      
+      const cell = newGrid[row][col];
+      // Only move blocks (fish treats), never circles (cats)
+      if (cell && cell.type === 'treat') {
+        // Check if this block is part of a treat
+        const treatInfo = isPartOfTreat(newGrid, row, col);
+        
+        if (!treatInfo) {
           // Single block (not part of a treat) - fall to the lowest empty space in its column
           // Find the lowest empty space below this block
           let lowestEmptyRow = row;
