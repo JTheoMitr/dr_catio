@@ -222,15 +222,8 @@ const useGameState = () => {
     
     setGrid(currentGrid);
     
-    // Calculate score
-    if (totalCatsFed > 0) {
-      let turnScore = BASE_SCORE_PER_CAT * totalCatsFed;
-      if (totalCatsFed > 1) {
-        turnScore = Math.floor(turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_CAT, totalCatsFed - 1));
-      }
-      setScore(prev => prev + turnScore);
-      
-      // Add particle effects (using approximate cell size, will be adjusted in component)
+    // Add particle effects for ALL matches (even if no cats were fed)
+    if (allMatches.length > 0) {
       const newParticles = allMatches.map((match, index) => {
         const key = `${match.row}-${match.col}`;
         return {
@@ -240,8 +233,21 @@ const useGameState = () => {
         };
       });
       setParticles(prev => [...prev, ...newParticles]);
-      
+    }
+    
+    // Calculate score
+    if (totalCatsFed > 0) {
+      // Matches with cats: use existing scoring system
+      let turnScore = BASE_SCORE_PER_CAT * totalCatsFed;
+      if (totalCatsFed > 1) {
+        turnScore = Math.floor(turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_CAT, totalCatsFed - 1));
+      }
+      setScore(prev => prev + turnScore);
       console.log(`Cats fed: ${totalCatsFed}, Score: ${turnScore}`);
+    } else if (allMatches.length > 0) {
+      // Matches with no cats: award 25 points
+      setScore(prev => prev + 25);
+      console.log(`Match cleared (no cats), Score: 25`);
     }
     
     // Check level complete
