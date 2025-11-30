@@ -409,6 +409,11 @@ const useGameState = () => {
     setParticles(prev => prev.filter(p => p.id !== id));
   }, []);
 
+  // Clear animation trigger after it's been processed
+  const clearAnimationTrigger = useCallback(() => {
+    setAnimationTrigger(null);
+  }, []);
+
   return {
     grid,
     currentTreat,
@@ -426,6 +431,7 @@ const useGameState = () => {
     removeParticle,
     initializeLevel,
     animationTrigger,
+    clearAnimationTrigger,
   };
 };
 

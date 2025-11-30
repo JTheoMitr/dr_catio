@@ -30,27 +30,53 @@ export default function App() {
     restartLevel,
     removeParticle,
     animationTrigger,
+    clearAnimationTrigger,
   } = useGameState();
 
   const [animationType, setAnimationType] = useState('default');
+  const matchTimerRef = React.useRef(null);
 
   // Handle animation triggers from game state
   React.useEffect(() => {
     if (animationTrigger) {
       if (animationTrigger === 'match') {
         setAnimationType('match');
+        // Start 3 second timer to return to default
+        if (matchTimerRef.current) {
+          clearTimeout(matchTimerRef.current);
+        }
+        matchTimerRef.current = setTimeout(() => {
+          setAnimationType('default');
+          matchTimerRef.current = null;
+        }, 3000);
       } else if (animationTrigger === 'win') {
         setAnimationType('win');
+        // Clear any existing match timer
+        if (matchTimerRef.current) {
+          clearTimeout(matchTimerRef.current);
+          matchTimerRef.current = null;
+        }
       } else if (animationTrigger === 'lose') {
         setAnimationType('lose');
+        // Clear any existing match timer
+        if (matchTimerRef.current) {
+          clearTimeout(matchTimerRef.current);
+          matchTimerRef.current = null;
+        }
       }
+      // Clear the trigger after processing to prevent retriggering
+      clearAnimationTrigger();
     }
-  }, [animationTrigger]);
+  }, [animationTrigger, clearAnimationTrigger]);
 
-  const handleAnimationComplete = () => {
-    // Return to default animation when one-time animations finish
-    setAnimationType('default');
-  };
+  // Cleanup timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (matchTimerRef.current) {
+        clearTimeout(matchTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -75,7 +101,6 @@ export default function App() {
             <View style={styles.animationContainer}>
               <AnimatedSprite 
                 animationType={animationType}
-                onAnimationComplete={handleAnimationComplete}
               />
             </View>
             

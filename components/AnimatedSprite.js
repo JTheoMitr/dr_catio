@@ -14,7 +14,7 @@ const FRAME_SIZE = 64;
 const FPS = 5;
 const FRAME_DURATION = 1000 / FPS; // milliseconds per frame
 
-const AnimatedSprite = ({ animationType = 'default', onAnimationComplete }) => {
+const AnimatedSprite = ({ animationType = 'default' }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const [currentAnimation, setCurrentAnimation] = useState(animationType);
   const [currentFrame, setCurrentFrame] = useState(0);
@@ -30,7 +30,6 @@ const AnimatedSprite = ({ animationType = 'default', onAnimationComplete }) => {
     const config = ANIMATION_CONFIG[currentAnimation];
     if (!config) return;
 
-    const isLooping = currentAnimation === 'default';
     const totalFrames = config.frames;
 
     // Clear any existing interval
@@ -42,23 +41,11 @@ const AnimatedSprite = ({ animationType = 'default', onAnimationComplete }) => {
     setCurrentFrame(0);
     translateX.setValue(0);
 
-    // Update frame position
+    // Update frame position - all animations loop
     const updateFrame = () => {
       setCurrentFrame(prevFrame => {
         const nextFrame = prevFrame + 1;
-        
-        // If we've reached the end of a one-time animation
-        if (!isLooping && nextFrame >= totalFrames) {
-          // Call completion callback
-          if (onAnimationComplete) {
-            onAnimationComplete();
-          }
-          // Return to default animation
-          setCurrentAnimation('default');
-          return 0;
-        }
-        
-        // Loop for default animation
+        // Loop all animations using modulo
         return nextFrame % totalFrames;
       });
     };
@@ -71,7 +58,7 @@ const AnimatedSprite = ({ animationType = 'default', onAnimationComplete }) => {
         clearInterval(frameIntervalRef.current);
       }
     };
-  }, [currentAnimation, translateX, onAnimationComplete]);
+  }, [currentAnimation, translateX]);
 
   // Update translateX when currentFrame changes
   useEffect(() => {
