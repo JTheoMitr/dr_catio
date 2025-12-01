@@ -10,7 +10,9 @@ const ANIMATION_CONFIG = {
   lose: { frames: 8, file: require('../assets/animations/lose-spritesheet.png') },
 };
 
-const FRAME_SIZE = 64;
+const FRAME_SIZE = 128;
+const ANIMATION_SCALE = 1.0; // 100% of original size
+const SCALED_FRAME_SIZE = FRAME_SIZE * ANIMATION_SCALE;
 const FPS = 5;
 const FRAME_DURATION = 1000 / FPS; // milliseconds per frame
 
@@ -62,28 +64,28 @@ const AnimatedSprite = ({ animationType = 'default' }) => {
 
   // Update translateX when currentFrame changes
   useEffect(() => {
-    translateX.setValue(-currentFrame * FRAME_SIZE);
+    translateX.setValue(-currentFrame * SCALED_FRAME_SIZE);
   }, [currentFrame, translateX]);
 
   const config = ANIMATION_CONFIG[currentAnimation];
   if (!config) return null;
 
-  const spriteSheetWidth = config.frames * FRAME_SIZE;
+  const spriteSheetWidth = config.frames * SCALED_FRAME_SIZE;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.spriteContainer, { width: FRAME_SIZE, height: FRAME_SIZE }]}>
+      <View style={[styles.spriteContainer, { width: SCALED_FRAME_SIZE, height: SCALED_FRAME_SIZE }]}>
         <Animated.Image
           source={config.file}
           style={[
             styles.spriteSheet,
             {
               width: spriteSheetWidth,
-              height: FRAME_SIZE,
+              height: SCALED_FRAME_SIZE,
               transform: [{ translateX }],
             },
           ]}
-          resizeMode="cover"
+          resizeMode="contain"
         />
       </View>
     </View>

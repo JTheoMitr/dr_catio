@@ -187,6 +187,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: MARGIN,
+    marginLeft: -10, // Move animation 10 pixels to the left
   },
   gridContainer: {
     flex: 0,
