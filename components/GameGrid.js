@@ -7,13 +7,18 @@ import ParticleEffect from './ParticleEffect';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_CELL_SIZE = Math.floor((SCREEN_WIDTH - 40) / GRID_WIDTH); // 20px padding on each side
 export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 0.7); // Scale down to 70%
+const CELL_BORDER_WIDTH = 0.5; // Border width from GridCell styles
 const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
+// Account for cell borders: only count outer borders (left + right = 1px, top + bottom = 1px)
+// Internal borders overlap and don't add to total size
+const GRID_WIDTH_WITH_BORDERS = (CELL_SIZE * GRID_WIDTH) + (CELL_BORDER_WIDTH * 2) + 3;
+const GRID_HEIGHT_WITH_BORDERS = (CELL_SIZE * GRID_HEIGHT) + (CELL_BORDER_WIDTH * 2) + 3;
 
 const GameGrid = ({ grid, currentTreat, treatPosition, particles, onRemoveParticle }) => {
   return (
     <View style={styles.container} pointerEvents="box-none">
       <View style={styles.gridContainer} pointerEvents="box-none">
-        <View style={[styles.grid, { width: CELL_SIZE * GRID_WIDTH, height: GRID_HEIGHT_PX }]} pointerEvents="none">
+        <View style={[styles.grid, { width: GRID_WIDTH_WITH_BORDERS, height: GRID_HEIGHT_WITH_BORDERS }]} pointerEvents="none">
           {grid.map((row, rowIndex) => (
             <View key={rowIndex} style={styles.gridRow} pointerEvents="none">
               {row.map((cell, colIndex) => {
@@ -99,17 +104,19 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     position: 'relative',
-    width: CELL_SIZE * GRID_WIDTH,
+    width: GRID_WIDTH_WITH_BORDERS,
   },
   grid: {
     borderWidth: 2,
     borderColor: '#333',
-    backgroundColor: '#f0f0f0',
-    width: CELL_SIZE * GRID_WIDTH,
+    backgroundColor: '#E6D9F5', // Light pastel purple
+    width: GRID_WIDTH_WITH_BORDERS,
+    paddingRight: 2, // Shift cells left by 1px to nestle them in the border
+    paddingBottom: 2, // Shift cells up by 1px to nestle them in the border
   },
   gridRow: {
     flexDirection: 'row',
-    width: CELL_SIZE * GRID_WIDTH,
+    // No fixed width - let it size naturally based on children (cells with borders)
   },
 });
 

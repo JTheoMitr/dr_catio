@@ -65,7 +65,7 @@ const GridCell = ({ cell, size }) => {
 const styles = StyleSheet.create({
   cell: {
     borderWidth: 0.5,
-    borderColor: '#ddd',
+    borderColor: '#000000', // Black grid lines for better visibility
   },
   treat: {
     // Fish treat block
