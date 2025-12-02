@@ -184,10 +184,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: MARGIN,
   },
   animationContainer: {
+    width: 200, // Fixed width to prevent pushing grid off screen
+    height: 200, // Fixed height for consistency
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: MARGIN,
-    marginLeft: -10, // Move animation 10 pixels to the left
+    marginLeft: -60, // Move animation 60 pixels to the left
   },
   gridContainer: {
     flex: 0,

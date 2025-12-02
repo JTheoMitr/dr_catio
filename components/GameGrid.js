@@ -5,8 +5,15 @@ import GridCell from './GridCell';
 import ParticleEffect from './ParticleEffect';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BASE_CELL_SIZE = Math.floor((SCREEN_WIDTH - 40) / GRID_WIDTH); // 20px padding on each side
-export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 0.7); // Scale down to 70%
+// Account for animation container (200px) + margins + buffer
+// Animation: 200px width + MARGIN (right margin) - 20px (left margin offset) + buffer
+const MARGIN_PERCENT = 0.025;
+const MIN_MARGIN = 15;
+const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
+const ANIMATION_SPACE = 200 + MARGIN - 60; // Animation width + right margin - left offset
+const BUFFER = 15; // Extra buffer for spacing (reduced to give more space to grid)
+const BASE_CELL_SIZE = Math.floor((SCREEN_WIDTH - ANIMATION_SPACE - BUFFER) / GRID_WIDTH);
+export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 0.8); // Scale to 80% (increased from 70% for ~15% larger grid)
 const CELL_BORDER_WIDTH = 0.5; // Border width from GridCell styles
 const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
 // Account for cell borders: only count outer borders (left + right = 1px, top + bottom = 1px)
