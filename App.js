@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, SafeAreaView, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import MenuScreen from './components/MenuScreen';
 import GameGrid from './components/GameGrid';
 import TouchControls from './components/TouchControls';
 import AnimatedSprite from './components/AnimatedSprite';
@@ -13,7 +14,8 @@ const MARGIN_PERCENT = 0.025; // 2.5% margin
 const MIN_MARGIN = 15; // Minimum 15px margin
 const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
 
-export default function App() {
+// Game Screen Component - wraps the game logic so hook is only called when needed
+const GameScreen = () => {
   const {
     grid,
     currentTreat,
@@ -148,6 +150,37 @@ export default function App() {
           </View>
         </View>
       )}
+    </SafeAreaView>
+  );
+};
+
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState('menu'); // 'menu', 'game', 'options', etc.
+
+  const handleStartGame = () => {
+    setCurrentScreen('game');
+  };
+
+  // Show menu screen
+  if (currentScreen === 'menu') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        <MenuScreen onStartGame={handleStartGame} />
+      </SafeAreaView>
+    );
+  }
+
+  // Show game screen (GameScreen component will only mount when currentScreen === 'game')
+  if (currentScreen === 'game') {
+    return <GameScreen />;
+  }
+
+  // Fallback (shouldn't reach here, but just in case)
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="auto" />
+      <MenuScreen onStartGame={handleStartGame} />
     </SafeAreaView>
   );
 }
