@@ -103,7 +103,7 @@ const AnimatedSprite = ({ animationType = 'default' }) => {
         const totalFrames = totalFramesRef.current;
         const nextFrame = prevFrame + 1;
         const newFrame = nextFrame % totalFrames;
-        console.log(`[AnimatedSprite] Frame update: ${prevFrame} -> ${newFrame} (total: ${totalFrames})`);
+       // console.log(`[AnimatedSprite] Frame update: ${prevFrame} -> ${newFrame} (total: ${totalFrames})`);
         // Loop all animations using modulo
         return newFrame;
       });
@@ -140,7 +140,7 @@ const AnimatedSprite = ({ animationType = 'default' }) => {
     const frameOffsetX = -col * frameWidth;
     const frameOffsetY = -row * frameHeight;
     
-    console.log(`[AnimatedSprite] Transform update - Frame: ${currentFrame}, Row: ${row}, Col: ${col}, X: ${frameOffsetX}, Y: ${frameOffsetY}, Animation: ${currentAnimation}`);
+   // console.log(`[AnimatedSprite] Transform update - Frame: ${currentFrame}, Row: ${row}, Col: ${col}, X: ${frameOffsetX}, Y: ${frameOffsetY}, Animation: ${currentAnimation}`);
     
     // Use Animated.parallel with zero-duration to ensure both transforms are applied atomically
     // This prevents visual glitches when both X and Y change simultaneously (e.g., row transitions)

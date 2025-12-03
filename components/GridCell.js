@@ -5,10 +5,10 @@ import { COLORS } from '../constants/GameConstants';
 // Import your pixel art assets
 // Update these paths to match your actual asset filenames
 const fishTreatAssets = {
-  [COLORS.RED]: require('../assets/fish-treat-red.png'),
-  [COLORS.YELLOW]: require('../assets/fish-treat-yellow.png'),
-  [COLORS.GREEN]: require('../assets/fish-treat-green.png'),
-  [COLORS.BLUE]: require('../assets/fish-treat-blue.png'),
+  [COLORS.RED]: require('../assets/gas-icon-red.png'),
+  [COLORS.YELLOW]: require('../assets/ammo-icon-yellow.png'),
+  [COLORS.GREEN]: require('../assets/energy-icon-green.png'),
+  [COLORS.BLUE]: require('../assets/armor-icon-blue.png'),
 };
 
 const catHeadAssets = {
@@ -43,19 +43,20 @@ const GridCell = ({ cell, size }) => {
       </View>
     );
   } else {
-    // Fish treat: use pixel art image
+    // Treat icon: use pixel art image at native size (32x32) to avoid blur
     const treatImage = fishTreatAssets[cell.color];
+    const iconSize = 32; // Native size of the icons
     return (
-      <View style={[styles.cell, cellStyle]} pointerEvents="none">
+      <View style={[styles.cell, cellStyle, { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="none">
         {treatImage ? (
           <Image 
             source={treatImage} 
-            style={cellStyle} 
+            style={{ width: iconSize, height: iconSize }} 
             resizeMode="contain"
           />
         ) : (
           // Fallback to colored block if image not found
-          <View style={[styles.treat, cellStyle, { backgroundColor: '#999' }]} />
+          <View style={[styles.treat, { width: iconSize, height: iconSize, backgroundColor: '#999' }]} />
         )}
       </View>
     );

@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   grid: {
     borderWidth: 2,
     borderColor: '#333',
-    backgroundColor: '#E6D9F5', // Light pastel purple
+    backgroundColor: '#151519', // V Dark Blue, almost black
     width: GRID_WIDTH_WITH_BORDERS,
     paddingRight: 2, // Shift cells left by 1px to nestle them in the border
     paddingBottom: 2, // Shift cells up by 1px to nestle them in the border
