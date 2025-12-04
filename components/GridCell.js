@@ -12,10 +12,10 @@ const fishTreatAssets = {
 };
 
 const catHeadAssets = {
-  [COLORS.RED]: require('../assets/cat-head-red.png'),
-  [COLORS.YELLOW]: require('../assets/cat-head-yellow.png'),
-  [COLORS.GREEN]: require('../assets/cat-head-green.png'),
-  [COLORS.BLUE]: require('../assets/cat-head-blue.png'),
+  [COLORS.RED]: require('../assets/mech-enemy-red.png'),
+  [COLORS.YELLOW]: require('../assets/mech-enemy-yellow.png'),
+  [COLORS.GREEN]: require('../assets/mech-enemy-green.png'),
+  [COLORS.BLUE]: require('../assets/mech-enemy-blue.png'),
 };
 
 const GridCell = ({ cell, size }) => {

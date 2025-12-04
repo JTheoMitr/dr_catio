@@ -13,7 +13,7 @@ const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
 const ANIMATION_SPACE = 200 + MARGIN - 60; // Animation width + right margin - left offset
 const BUFFER = 15; // Extra buffer for spacing (reduced to give more space to grid)
 const BASE_CELL_SIZE = Math.floor((SCREEN_WIDTH - ANIMATION_SPACE - BUFFER) / GRID_WIDTH);
-export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 0.92); // Scale to 92% (0.8 * 1.15 = 0.92, ~15% larger than previous)
+export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 1.15); // Scale to 110% (0.8 * 1.15 = 0.92, ~15% larger than previous)
 const CELL_BORDER_WIDTH = 0.5; // Border width from GridCell styles
 const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
 // Account for cell borders: only count outer borders (left + right = 1px, top + bottom = 1px)
