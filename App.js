@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Text, SafeAreaView, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import MenuScreen from './components/MenuScreen';
-import GameGrid from './components/GameGrid';
+import GameGrid, { GRID_HEIGHT_WITH_BORDERS } from './components/GameGrid';
 import TouchControls from './components/TouchControls';
 import AnimatedSprite from './components/AnimatedSprite';
 import useGameState from './hooks/useGameState';
@@ -221,8 +221,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: MARGIN,
   },
   animationContainer: {
-    width: 140, // Fixed width to accommodate 200px sprites
-    height: 380, // Fixed height for two 200px sprites stacked vertically
+    width: 125, // Fixed width to accommodate 200px sprites
+    height: GRID_HEIGHT_WITH_BORDERS, // Match GameGrid height
     flexDirection: 'column', // Stack sprites vertically
     justifyContent: 'center', // Center vertically to align with grid
     alignItems: 'center',
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#151519',
     overflow: 'hidden', // Clip animations that exceed container bounds
     marginRight: 2, // Reduced margin to bring animation and grid closer
-    marginLeft: -10, // Move animation 10 pixels to the left
+    marginLeft: 0, // Move animation 10 pixels to the left
   },
   gridContainer: {
     flex: 0,

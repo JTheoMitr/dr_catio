@@ -19,7 +19,7 @@ const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
 // Account for cell borders: only count outer borders (left + right = 1px, top + bottom = 1px)
 // Internal borders overlap and don't add to total size
 const GRID_WIDTH_WITH_BORDERS = (CELL_SIZE * GRID_WIDTH) + (CELL_BORDER_WIDTH * 2) + 3;
-const GRID_HEIGHT_WITH_BORDERS = (CELL_SIZE * GRID_HEIGHT) + (CELL_BORDER_WIDTH * 2) + 3;
+export const GRID_HEIGHT_WITH_BORDERS = (CELL_SIZE * GRID_HEIGHT) + (CELL_BORDER_WIDTH * 2) + 3;
 
 const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemoveParticle }) => {
   return (
