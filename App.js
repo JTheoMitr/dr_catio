@@ -7,6 +7,7 @@ import TouchControls from './components/TouchControls';
 import AnimatedSprite from './components/AnimatedSprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
+import { Audio } from 'expo-av'; 
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_AREA_HEIGHT = 45; // Space at bottom for swiping (90% of 50px to show full bottom row)
@@ -37,6 +38,51 @@ const GameScreen = () => {
 
   const [animationType, setAnimationType] = useState('default');
   const matchTimerRef = React.useRef(null);
+
+  // 🔊 Hold a ref to the sound instance so we can stop/unload it on unmount
+  const bgmRef = React.useRef(null);
+
+  // 🔊 Load + play music when GameScreen mounts
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const setupAudio = async () => {
+      try {
+        // Optional: make sure audio plays even in silent mode on iOS
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+        });
+
+        const { sound } = await Audio.Sound.createAsync(
+          require('./assets/music/SMMOG_Lvl1.mp3')  // ⬅️ path relative to App.js
+        );
+
+        if (!isMounted) {
+          await sound.unloadAsync();
+          return;
+        }
+
+        bgmRef.current = sound;
+
+        // Loop background track
+        await sound.setIsLoopingAsync(true);
+        await sound.playAsync();
+      } catch (e) {
+        console.warn('Error loading/playing SMMOG.mp3', e);
+      }
+    };
+
+    setupAudio();
+
+     // Cleanup when GameScreen unmounts
+    return () => {
+      isMounted = false;
+      if (bgmRef.current) {
+        bgmRef.current.unloadAsync();
+        bgmRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle animation triggers from game state
   React.useEffect(() => {
