@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GRID_WIDTH, GRID_HEIGHT, STARTING_CAT_COUNT, CATS_PER_LEVEL, BASE_SCORE_PER_CAT, MULTIPLIER_PER_ADDITIONAL_CAT, GAME_STATES } from '../constants/GameConstants';
+import { GRID_WIDTH, GRID_HEIGHT, STARTING_MECH_COUNT, MECHS_PER_LEVEL, BASE_SCORE_PER_MECH, MULTIPLIER_PER_ADDITIONAL_MECH, GAME_STATES } from '../constants/GameConstants';
 import {
-  generateFishTreat,
-  generateRandomCats,
-  canPlaceFishTreat,
-  rotateFishTreat,
+  generateGunIcon,
+  generateRandomMechs,
+  canPlaceGunIcon,
+  rotateGunIcon,
   findMatches,
   clearMatches,
   applyGravity,
@@ -20,8 +20,8 @@ const useGameState = () => {
     return newGrid;
   });
   
-  const [currentTreat, setCurrentTreat] = useState(null);
-  const [treatPosition, setTreatPosition] = useState(null);
+  const [currentGunIcon, setCurrentGunIcon] = useState(null);
+  const [gunIconPosition, setGunIconPosition] = useState(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
   const [gameState, setGameState] = useState(GAME_STATES.PLAYING);
@@ -31,8 +31,8 @@ const useGameState = () => {
   const fallTimerRef = useRef(null);
   const gravityTimerRef = useRef(null);
   const gridRef = useRef(grid);
-  const currentTreatRef = useRef(currentTreat);
-  const treatPositionRef = useRef(treatPosition);
+  const currentGunIconRef = useRef(currentGunIcon);
+  const gunIconPositionRef = useRef(gunIconPosition);
   const particleIdCounter = useRef(0);
   
   // Keep refs in sync
@@ -41,50 +41,50 @@ const useGameState = () => {
   }, [grid]);
   
   useEffect(() => {
-    currentTreatRef.current = currentTreat;
-  }, [currentTreat]);
+    currentGunIconRef.current = currentGunIcon;
+  }, [currentGunIcon]);
   
   useEffect(() => {
-    treatPositionRef.current = treatPosition;
-  }, [treatPosition]);
+    gunIconPositionRef.current = gunIconPosition;
+  }, [gunIconPosition]);
 
   // Initialize game
   const initializeLevel = useCallback((levelNum) => {
     const newGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
-    const catCount = STARTING_CAT_COUNT + (levelNum - 1) * CATS_PER_LEVEL;
-    const cats = generateRandomCats(catCount);
+    const mechCount = STARTING_MECH_COUNT + (levelNum - 1) * MECHS_PER_LEVEL;
+    const mechs = generateRandomMechs(mechCount);
     
-    cats.forEach(cat => {
-      newGrid[cat.row][cat.col] = {
-        type: 'cat',
-        color: cat.color,
+    mechs.forEach(mech => {
+      newGrid[mech.row][mech.col] = {
+        type: 'enemy',
+        color: mech.color,
       };
     });
     
     setGrid(newGrid);
-    setCurrentTreat(generateFishTreat());
-    setTreatPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
+    setCurrentGunIcon(generateGunIcon());
+    setGunIconPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
     setGameState(GAME_STATES.PLAYING);
     setAnimationTrigger(null); // Reset animation trigger
   }, []);
 
-  // Place treat on grid
-  const placeTreat = useCallback((treat, position, currentGrid) => {
-    if (!treat || !position) return;
+  // Place gun icon on grid
+  const placeGunIcon = useCallback((gunIcon, position, currentGrid) => {
+    if (!gunIcon || !position) return;
     
     const newGrid = currentGrid.map(row => [...row]);
-    const treatPositions = getTreatPositions(treat, position.row, position.col);
+    const gunIconPositions = getGunIconPositions(gunIcon, position.row, position.col);
     
-    treatPositions.forEach(({ row, col, isTop }) => {
+    gunIconPositions.forEach(({ row, col, isTop }) => {
       newGrid[row][col] = {
-        type: 'treat',
-        color: isTop ? treat.top : treat.bottom,
+        type: 'gunIcon',
+        color: isTop ? gunIcon.top : gunIcon.bottom,
       };
     });
     
     setGrid(newGrid);
-    setCurrentTreat(generateFishTreat());
-    setTreatPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
+    setCurrentGunIcon(generateGunIcon());
+    setGunIconPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
     
     // Check for matches
     checkMatches(newGrid);
@@ -92,8 +92,8 @@ const useGameState = () => {
     return newGrid; // Return the new grid
   }, []);
 
-  // Get treat positions
-  const getTreatPositions = (treat, row, col) => {
+  // Get gun icon positions
+  const getGunIconPositions = (gunIcon, row, col) => {
     const positions = [];
     
     // 0°: horizontal, left-right (top color on left, bottom color on right)
@@ -101,19 +101,19 @@ const useGameState = () => {
     // 180°: horizontal, right-left (top color on right, bottom color on left) - flipped
     // 270°: vertical, bottom-top (top color on bottom, bottom color on top) - flipped
     
-    if (treat.rotation === 0) {
+    if (gunIcon.rotation === 0) {
       // Horizontal: left and right
       positions.push({ row, col, isTop: true });
       positions.push({ row, col: col + 1, isTop: false });
-    } else if (treat.rotation === 1) {
+    } else if (gunIcon.rotation === 1) {
       // Vertical: top and bottom
       positions.push({ row, col, isTop: true });
       positions.push({ row: row + 1, col, isTop: false });
-    } else if (treat.rotation === 2) {
+    } else if (gunIcon.rotation === 2) {
       // Horizontal: right and left (flipped)
       positions.push({ row, col: col + 1, isTop: true });
       positions.push({ row, col, isTop: false });
-    } else if (treat.rotation === 3) {
+    } else if (gunIcon.rotation === 3) {
       // Vertical: bottom and top (flipped)
       positions.push({ row: row + 1, col, isTop: true });
       positions.push({ row, col, isTop: false });
@@ -125,7 +125,7 @@ const useGameState = () => {
   // Check for matches and clear them
   const checkMatches = useCallback((gridToCheck) => {
     let currentGrid = gridToCheck.map(row => [...row]);
-    let totalCatsFed = 0;
+    let totalMechsDestroyed = 0;
     let allMatches = [];
     const matchColors = new Map(); // Store colors for particles
     const affectedColumns = new Set(); // Track which columns had cells cleared
@@ -156,7 +156,7 @@ const useGameState = () => {
       allMatches = [...allMatches, ...matches];
       const result = clearMatches(currentGrid, matches);
       currentGrid = result.grid;
-      totalCatsFed += result.catCount;
+      totalMechsDestroyed += result.mechCount;
       
       // After clearing, ensure all columns with blocks that can fall are included
       // This catches orphaned blocks (the other half of a treat)
@@ -165,7 +165,7 @@ const useGameState = () => {
           const cell = currentGrid[row][col];
           // If there's a block with empty space below it, and this column is adjacent to affected columns
           // or is already affected, ensure it's processed
-          if (cell && cell.type === 'treat' && currentGrid[row + 1][col] === null) {
+          if (cell && cell.type === 'gunIcon' && currentGrid[row + 1][col] === null) {
             // Check if this column is adjacent to any affected column
             const isAdjacent = Array.from(affectedColumns).some(affectedCol => 
               Math.abs(col - affectedCol) <= 1
@@ -218,7 +218,7 @@ const useGameState = () => {
             allMatches = [...allMatches, ...newMatches];
             const clearResult = clearMatches(currentGrid, newMatches);
             currentGrid = clearResult.grid;
-            totalCatsFed += clearResult.catCount;
+            totalMechsDestroyed += clearResult.mechCount;
           }
         }
       }
@@ -240,20 +240,20 @@ const useGameState = () => {
     }
     
     // Calculate score
-    if (totalCatsFed > 0) {
-      // Matches with cats: use existing scoring system
-      let turnScore = BASE_SCORE_PER_CAT * totalCatsFed;
-      if (totalCatsFed > 1) {
-        turnScore = Math.floor(turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_CAT, totalCatsFed - 1));
+    if (totalMechsDestroyed > 0) {
+      // Matches with mechs: use existing scoring system
+      let turnScore = BASE_SCORE_PER_MECH * totalMechsDestroyed;
+      if (totalMechsDestroyed > 1) {
+        turnScore = Math.floor(turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_MECH, totalMechsDestroyed - 1));
       }
       setScore(prev => prev + turnScore);
-      console.log(`Cats fed: ${totalCatsFed}, Score: ${turnScore}`);
-      // Trigger match animation when cats are fed
+      console.log(`Mechs destroyed: ${totalMechsDestroyed}, Score: ${turnScore}`);
+      // Trigger match animation when mechs are destroyed
       setAnimationTrigger('match');
     } else if (allMatches.length > 0) {
-      // Matches with no cats: award 25 points
+      // Matches with no mechs: award 25 points
       setScore(prev => prev + 25);
-      console.log(`Match cleared (no cats), Score: 25`);
+      console.log(`Match cleared (no mechs), Score: 25`);
     }
     
     // Check level complete
@@ -271,40 +271,40 @@ const useGameState = () => {
     }
   }, []);
 
-  // Move treat left
+  // Move gun icon left
   const moveLeft = useCallback(() => {
-    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
     
-    const newCol = treatPosition.col - 1;
-    if (canPlaceFishTreat(grid, currentTreat, treatPosition.row, newCol)) {
-      setTreatPosition({ ...treatPosition, col: newCol });
+    const newCol = gunIconPosition.col - 1;
+    if (canPlaceGunIcon(grid, currentGunIcon, gunIconPosition.row, newCol)) {
+      setGunIconPosition({ ...gunIconPosition, col: newCol });
       console.log('Piece moved left');
     }
-  }, [currentTreat, treatPosition, grid, gameState]);
+  }, [currentGunIcon, gunIconPosition, grid, gameState]);
 
-  // Move treat right
+  // Move gun icon right
   const moveRight = useCallback(() => {
-    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
     
-    const newCol = treatPosition.col + 1;
-    if (canPlaceFishTreat(grid, currentTreat, treatPosition.row, newCol)) {
-      setTreatPosition({ ...treatPosition, col: newCol });
+    const newCol = gunIconPosition.col + 1;
+    if (canPlaceGunIcon(grid, currentGunIcon, gunIconPosition.row, newCol)) {
+      setGunIconPosition({ ...gunIconPosition, col: newCol });
       console.log('Piece moved right');
     }
-  }, [currentTreat, treatPosition, grid, gameState]);
+  }, [currentGunIcon, gunIconPosition, grid, gameState]);
 
-  // Rotate treat
+  // Rotate gun icon
   const rotate = useCallback(() => {
-    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
     
-    const rotated = rotateFishTreat(currentTreat);
-    const currentRow = treatPosition.row;
-    const currentCol = treatPosition.col;
+    const rotated = rotateGunIcon(currentGunIcon);
+    const currentRow = gunIconPosition.row;
+    const currentCol = gunIconPosition.col;
     
     // Try to place at current position
-    if (canPlaceFishTreat(grid, rotated, currentRow, currentCol)) {
-      setCurrentTreat(rotated);
-      console.log(`Piece rotated: ${currentTreat.rotation} -> ${rotated.rotation}`);
+    if (canPlaceGunIcon(grid, rotated, currentRow, currentCol)) {
+      setCurrentGunIcon(rotated);
+      console.log(`Piece rotated: ${currentGunIcon.rotation} -> ${rotated.rotation}`);
       return;
     }
     
@@ -312,50 +312,50 @@ const useGameState = () => {
     // or up for vertical->horizontal
     if (rotated.rotation === 1) {
       // Rotating to vertical - try shifting left
-      if (canPlaceFishTreat(grid, rotated, currentRow, currentCol - 1)) {
-        setCurrentTreat(rotated);
-        setTreatPosition({ ...treatPosition, col: currentCol - 1 });
+      if (canPlaceGunIcon(grid, rotated, currentRow, currentCol - 1)) {
+        setCurrentGunIcon(rotated);
+        setGunIconPosition({ ...gunIconPosition, col: currentCol - 1 });
         console.log('Piece rotated (shifted left)');
         return;
       }
       // Try shifting right
-      if (canPlaceFishTreat(grid, rotated, currentRow, currentCol + 1)) {
-        setCurrentTreat(rotated);
-        setTreatPosition({ ...treatPosition, col: currentCol + 1 });
+      if (canPlaceGunIcon(grid, rotated, currentRow, currentCol + 1)) {
+        setCurrentGunIcon(rotated);
+        setGunIconPosition({ ...gunIconPosition, col: currentCol + 1 });
         console.log('Piece rotated (shifted right)');
         return;
       }
     } else {
       // Rotating to horizontal - try shifting up
-      if (canPlaceFishTreat(grid, rotated, currentRow - 1, currentCol)) {
-        setCurrentTreat(rotated);
-        setTreatPosition({ ...treatPosition, row: currentRow - 1 });
+      if (canPlaceGunIcon(grid, rotated, currentRow - 1, currentCol)) {
+        setCurrentGunIcon(rotated);
+        setGunIconPosition({ ...gunIconPosition, row: currentRow - 1 });
         console.log('Piece rotated (shifted up)');
         return;
       }
     }
     
     console.log('Piece rotation blocked');
-  }, [currentTreat, treatPosition, grid, gameState]);
+  }, [currentGunIcon, gunIconPosition, grid, gameState]);
 
-  // Drop treat
+  // Drop gun icon
   const drop = useCallback(() => {
-    if (gameState !== GAME_STATES.PLAYING || !currentTreat || !treatPosition) return;
+    if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
     
     // Get current grid from ref to avoid state update conflicts
     const currentGrid = gridRef.current;
-    let newRow = treatPosition.row;
+    let newRow = gunIconPosition.row;
     
-    // Find the lowest position the treat can be placed
-    while (canPlaceFishTreat(currentGrid, currentTreat, newRow + 1, treatPosition.col)) {
+    // Find the lowest position the gun icon can be placed
+    while (canPlaceGunIcon(currentGrid, currentGunIcon, newRow + 1, gunIconPosition.col)) {
       newRow++;
     }
     
-    // Place the treat at the final position
-    placeTreat(currentTreat, { ...treatPosition, row: newRow }, currentGrid);
+    // Place the gun icon at the final position
+    placeGunIcon(currentGunIcon, { ...gunIconPosition, row: newRow }, currentGrid);
     
     console.log('Piece dropped');
-  }, [currentTreat, treatPosition, gameState, placeTreat]);
+  }, [currentGunIcon, gunIconPosition, gameState, placeGunIcon]);
 
   // Fall timer
   useEffect(() => {
@@ -363,20 +363,20 @@ const useGameState = () => {
     
     fallTimerRef.current = setInterval(() => {
       const currentGrid = gridRef.current;
-      const currentTreat = currentTreatRef.current;
-      const currentPos = treatPositionRef.current;
+      const currentGunIcon = currentGunIconRef.current;
+      const currentPos = gunIconPositionRef.current;
       
-      if (!currentTreat || !currentPos) return;
+      if (!currentGunIcon || !currentPos) return;
       
       // Move straight down: increase row, keep col the same
       const nextRow = currentPos.row + 1;
       const sameCol = currentPos.col;
       
-      if (canPlaceFishTreat(currentGrid, currentTreat, nextRow, sameCol)) {
-        setTreatPosition({ row: nextRow, col: sameCol });
+      if (canPlaceGunIcon(currentGrid, currentGunIcon, nextRow, sameCol)) {
+        setGunIconPosition({ row: nextRow, col: sameCol });
       } else {
-        // Can't move down, place the treat
-        placeTreat(currentTreat, currentPos, currentGrid);
+        // Can't move down, place the gun icon
+        placeGunIcon(currentGunIcon, currentPos, currentGrid);
       }
     }, FALL_INTERVAL);
     
@@ -385,7 +385,7 @@ const useGameState = () => {
         clearInterval(fallTimerRef.current);
       }
     };
-  }, [gameState, placeTreat]);
+  }, [gameState, placeGunIcon]);
 
   // Initialize first level
   useEffect(() => {
@@ -416,8 +416,8 @@ const useGameState = () => {
 
   return {
     grid,
-    currentTreat,
-    treatPosition,
+    currentGunIcon,
+    gunIconPosition,
     score,
     level,
     gameState,

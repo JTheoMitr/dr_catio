@@ -12,12 +12,12 @@ export const COLORS = {
 export const COLOR_VALUES = [COLORS.RED, COLORS.YELLOW, COLORS.GREEN, COLORS.BLUE];
 
 // Scoring
-export const BASE_SCORE_PER_CAT = 100;
-export const MULTIPLIER_PER_ADDITIONAL_CAT = 1.5;
+export const BASE_SCORE_PER_MECH = 100;
+export const MULTIPLIER_PER_ADDITIONAL_MECH = 1.5;
 
 // Game progression
-export const STARTING_CAT_COUNT = 2;
-export const CATS_PER_LEVEL = 1;
+export const STARTING_MECH_COUNT = 2;
+export const MECHS_PER_LEVEL = 1;
 
 // Game states
 export const GAME_STATES = {

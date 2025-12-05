@@ -5,8 +5,8 @@ export const getRandomColor = () => {
   return COLOR_VALUES[Math.floor(Math.random() * COLOR_VALUES.length)];
 };
 
-// Generate a random fish treat (2 blocks, can be same or different colors)
-export const generateFishTreat = () => {
+// Generate a random gun icon (2 blocks, can be same or different colors)
+export const generateGunIcon = () => {
   const color1 = getRandomColor();
   const color2 = Math.random() < 0.5 ? color1 : getRandomColor();
   return {
@@ -16,19 +16,19 @@ export const generateFishTreat = () => {
   };
 };
 
-// Generate random cat heads for initial board
-export const generateRandomCats = (count) => {
-  const cats = [];
+// Generate random mech enemies for initial board
+export const generateRandomMechs = (count) => {
+  const mechs = [];
   const positions = new Set();
   
-  while (cats.length < count) {
+  while (mechs.length < count) {
     const row = Math.floor(Math.random() * (GRID_HEIGHT - 4)) + 2; // Avoid top rows
     const col = Math.floor(Math.random() * GRID_WIDTH);
     const key = `${row}-${col}`;
     
     if (!positions.has(key)) {
       positions.add(key);
-      cats.push({
+      mechs.push({
         row,
         col,
         color: getRandomColor(),
@@ -36,7 +36,7 @@ export const generateRandomCats = (count) => {
     }
   }
   
-  return cats;
+  return mechs;
 };
 
 // Check if a position is valid
@@ -50,8 +50,8 @@ export const isEmpty = (grid, row, col) => {
   return grid[row][col] === null;
 };
 
-// Get positions occupied by a fish treat
-export const getFishTreatPositions = (treat, row, col) => {
+// Get positions occupied by a gun icon
+export const getGunIconPositions = (gunIcon, row, col) => {
   const positions = [];
   
   // 0°: horizontal, left-right (top color on left, bottom color on right)
@@ -59,19 +59,19 @@ export const getFishTreatPositions = (treat, row, col) => {
   // 180°: horizontal, right-left (top color on right, bottom color on left) - flipped
   // 270°: vertical, bottom-top (top color on bottom, bottom color on top) - flipped
   
-  if (treat.rotation === 0) {
+  if (gunIcon.rotation === 0) {
     // Horizontal: left and right
     positions.push({ row, col });
     positions.push({ row, col: col + 1 });
-  } else if (treat.rotation === 1) {
+  } else if (gunIcon.rotation === 1) {
     // Vertical: top and bottom
     positions.push({ row, col });
     positions.push({ row: row + 1, col });
-  } else if (treat.rotation === 2) {
+  } else if (gunIcon.rotation === 2) {
     // Horizontal: right and left (flipped)
     positions.push({ row, col: col + 1 });
     positions.push({ row, col });
-  } else if (treat.rotation === 3) {
+  } else if (gunIcon.rotation === 3) {
     // Vertical: bottom and top (flipped)
     positions.push({ row: row + 1, col });
     positions.push({ row, col });
@@ -80,9 +80,9 @@ export const getFishTreatPositions = (treat, row, col) => {
   return positions;
 };
 
-// Check if fish treat can be placed at position
-export const canPlaceFishTreat = (grid, treat, row, col) => {
-  const positions = getFishTreatPositions(treat, row, col);
+// Check if gun icon can be placed at position
+export const canPlaceGunIcon = (grid, gunIcon, row, col) => {
+  const positions = getGunIconPositions(gunIcon, row, col);
   
   for (const pos of positions) {
     if (!isValidPosition(pos.row, pos.col) || !isEmpty(grid, pos.row, pos.col)) {
@@ -93,11 +93,11 @@ export const canPlaceFishTreat = (grid, treat, row, col) => {
   return true;
 };
 
-// Rotate fish treat (cycles through 0°, 90°, 180°, 270°)
-export const rotateFishTreat = (treat) => {
+// Rotate gun icon (cycles through 0°, 90°, 180°, 270°)
+export const rotateGunIcon = (gunIcon) => {
   return {
-    ...treat,
-    rotation: (treat.rotation + 1) % 4,
+    ...gunIcon,
+    rotation: (gunIcon.rotation + 1) % 4,
   };
 };
 
@@ -198,54 +198,54 @@ export const findMatches = (grid) => {
 // Clear matches from grid
 export const clearMatches = (grid, matches) => {
   const newGrid = grid.map(row => [...row]);
-  let catCount = 0;
+  let mechCount = 0;
   
   matches.forEach(({ row, col }) => {
     const cell = newGrid[row][col];
-    if (cell && cell.type === 'cat') {
-      catCount++;
+    if (cell && cell.type === 'enemy') {
+      mechCount++;
     }
     newGrid[row][col] = null;
   });
   
-  return { grid: newGrid, catCount };
+  return { grid: newGrid, mechCount };
 };
 
-// Check if a block is part of a treat (has an adjacent treat block)
-const isPartOfTreat = (grid, row, col) => {
+// Check if a block is part of a gun icon (has an adjacent gun icon block)
+const isPartOfGunIcon = (grid, row, col) => {
   const cell = grid[row][col];
-  if (!cell || cell.type !== 'treat') return false;
+  if (!cell || cell.type !== 'gunIcon') return false;
   
-  // Check for adjacent treat blocks (horizontal or vertical)
+  // Check for adjacent gun icon blocks (horizontal or vertical)
   // Horizontal: check left and right
-  if (col > 0 && grid[row][col - 1] && grid[row][col - 1].type === 'treat') {
+  if (col > 0 && grid[row][col - 1] && grid[row][col - 1].type === 'gunIcon') {
     return { type: 'horizontal', partnerRow: row, partnerCol: col - 1 };
   }
-  if (col < GRID_WIDTH - 1 && grid[row][col + 1] && grid[row][col + 1].type === 'treat') {
+  if (col < GRID_WIDTH - 1 && grid[row][col + 1] && grid[row][col + 1].type === 'gunIcon') {
     return { type: 'horizontal', partnerRow: row, partnerCol: col + 1 };
   }
   
   // Vertical: check top and bottom
-  if (row > 0 && grid[row - 1][col] && grid[row - 1][col].type === 'treat') {
+  if (row > 0 && grid[row - 1][col] && grid[row - 1][col].type === 'gunIcon') {
     return { type: 'vertical', partnerRow: row - 1, partnerCol: col };
   }
-  if (row < GRID_HEIGHT - 1 && grid[row + 1][col] && grid[row + 1][col].type === 'treat') {
+  if (row < GRID_HEIGHT - 1 && grid[row + 1][col] && grid[row + 1][col].type === 'gunIcon') {
     return { type: 'vertical', partnerRow: row + 1, partnerCol: col };
   }
   
   return false;
 };
 
-// Check if both blocks of a treat can fall together
-const canTreatFall = (grid, row1, col1, row2, col2, treatType) => {
+// Check if both blocks of a gun icon can fall together
+const canGunIconFall = (grid, row1, col1, row2, col2, gunIconType) => {
   // Both blocks must have empty space below them
-  if (treatType === 'horizontal') {
-    // Horizontal treat: both blocks must be able to fall in their respective columns
+  if (gunIconType === 'horizontal') {
+    // Horizontal gun icon: both blocks must be able to fall in their respective columns
     const canFall1 = row1 < GRID_HEIGHT - 1 && grid[row1 + 1][col1] === null;
     const canFall2 = row2 < GRID_HEIGHT - 1 && grid[row2 + 1][col2] === null;
     return canFall1 && canFall2;
   } else {
-    // Vertical treat: the bottom block must be able to fall
+    // Vertical gun icon: the bottom block must be able to fall
     const bottomRow = Math.max(row1, row2);
     const topRow = Math.min(row1, row2);
     const col = col1; // Same column for vertical
@@ -255,12 +255,12 @@ const canTreatFall = (grid, row1, col1, row2, col2, treatType) => {
     if (grid[bottomRow + 1][col] !== null) return false;
     
     // Top block must be able to move into bottom block's position
-    return grid[bottomRow][col] === null || grid[bottomRow][col].type === 'treat';
+    return grid[bottomRow][col] === null || grid[bottomRow][col].type === 'gunIcon';
   }
 };
 
-// Apply gravity (make blocks fall) - only in specified columns, only moves blocks (not circles)
-// Treats (2-block pieces) must fall together - both blocks move or neither moves
+// Apply gravity (make blocks fall) - only in specified columns, only moves blocks (not enemies)
+// Gun icons (2-block pieces) must fall together - both blocks move or neither moves
 export const applyGravity = (grid, affectedColumns = null) => {
   const newGrid = grid.map(row => [...row]);
   let moved = false;
@@ -270,11 +270,11 @@ export const applyGravity = (grid, affectedColumns = null) => {
     ? new Set(affectedColumns) 
     : new Set(Array.from({ length: GRID_WIDTH }, (_, i) => i));
   
-  // Track which cells we've already processed (to avoid moving the same treat twice)
+  // Track which cells we've already processed (to avoid moving the same gun icon twice)
   const processed = new Set();
   
-  // FIRST PASS: Process treats (2-block pieces) from bottom to top
-  // This ensures treats fall together properly
+  // FIRST PASS: Process gun icons (2-block pieces) from bottom to top
+  // This ensures gun icons fall together properly
   for (let row = GRID_HEIGHT - 2; row >= 0; row--) {
     for (let col = 0; col < GRID_WIDTH; col++) {
       // Only process affected columns
@@ -284,20 +284,20 @@ export const applyGravity = (grid, affectedColumns = null) => {
       if (processed.has(cellKey)) continue;
       
       const cell = newGrid[row][col];
-      // Only move blocks (fish treats), never circles (cats)
-      if (cell && cell.type === 'treat') {
-        // Check if this block is part of a treat
-        const treatInfo = isPartOfTreat(newGrid, row, col);
+      // Only move blocks (gun icons), never enemies
+      if (cell && cell.type === 'gunIcon') {
+        // Check if this block is part of a gun icon
+        const gunIconInfo = isPartOfGunIcon(newGrid, row, col);
         
-        if (treatInfo) {
-          // This is part of a treat - both blocks must fall together
-          const { partnerRow, partnerCol, type: treatType } = treatInfo;
+        if (gunIconInfo) {
+          // This is part of a gun icon - both blocks must fall together
+          const { partnerRow, partnerCol, type: gunIconType } = gunIconInfo;
           const partnerKey = `${partnerRow}-${partnerCol}`;
           
           // Check if both blocks can fall
-          if (canTreatFall(newGrid, row, col, partnerRow, partnerCol, treatType)) {
+          if (canGunIconFall(newGrid, row, col, partnerRow, partnerCol, gunIconType)) {
             // Move both blocks together
-            if (treatType === 'horizontal') {
+            if (gunIconType === 'horizontal') {
               // Horizontal: move each block down in its own column
               newGrid[row + 1][col] = newGrid[row][col];
               newGrid[row][col] = null;
@@ -325,7 +325,7 @@ export const applyGravity = (grid, affectedColumns = null) => {
     }
   }
   
-  // SECOND PASS: Process single blocks (orphaned treat halves) from top to bottom
+  // SECOND PASS: Process single blocks (orphaned gun icon halves) from top to bottom
   // This ensures upper blocks move first, then lower blocks can fill the gaps
   for (let row = 0; row < GRID_HEIGHT - 1; row++) {
     for (let col = 0; col < GRID_WIDTH; col++) {
@@ -336,20 +336,20 @@ export const applyGravity = (grid, affectedColumns = null) => {
       if (processed.has(cellKey)) continue;
       
       const cell = newGrid[row][col];
-      // Only move blocks (fish treats), never circles (cats)
-      if (cell && cell.type === 'treat') {
-        // Check if this block is part of a treat
-        const treatInfo = isPartOfTreat(newGrid, row, col);
+      // Only move blocks (gun icons), never enemies
+      if (cell && cell.type === 'gunIcon') {
+        // Check if this block is part of a gun icon
+        const gunIconInfo = isPartOfGunIcon(newGrid, row, col);
         
-        if (!treatInfo) {
-          // Single block (not part of a treat) - fall to the lowest empty space in its column
+        if (!gunIconInfo) {
+          // Single block (not part of a gun icon) - fall to the lowest empty space in its column
           // Find the lowest empty space below this block
           let lowestEmptyRow = row;
           for (let checkRow = row + 1; checkRow < GRID_HEIGHT; checkRow++) {
             if (newGrid[checkRow][col] === null) {
               lowestEmptyRow = checkRow;
             } else {
-              // Hit something (block or circle) - stop here
+              // Hit something (block or enemy) - stop here
               break;
             }
           }
@@ -379,12 +379,12 @@ export const isGameOver = (grid) => {
   return false;
 };
 
-// Check if level is complete (no cats remaining)
+// Check if level is complete (no mech enemies remaining)
 export const isLevelComplete = (grid) => {
   for (let row = 0; row < GRID_HEIGHT; row++) {
     for (let col = 0; col < GRID_WIDTH; col++) {
       const cell = grid[row][col];
-      if (cell && cell.type === 'cat') {
+      if (cell && cell.type === 'enemy') {
         return false;
       }
     }

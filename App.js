@@ -18,8 +18,8 @@ const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
 const GameScreen = () => {
   const {
     grid,
-    currentTreat,
-    treatPosition,
+    currentGunIcon,
+    gunIconPosition,
     score,
     level,
     gameState,
@@ -110,8 +110,8 @@ const GameScreen = () => {
             <View style={styles.gridContainer}>
               <GameGrid
                 grid={grid}
-                currentTreat={currentTreat}
-                treatPosition={treatPosition}
+                currentGunIcon={currentGunIcon}
+                gunIconPosition={gunIconPosition}
                 particles={particles}
                 onRemoveParticle={removeParticle}
               />
