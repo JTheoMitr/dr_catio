@@ -32,6 +32,13 @@ const ANIMATION_CONFIG = {
     sheetWidth: 800, // Actual image file width in pixels
     sheetHeight: 800 // Actual image file height in pixels
   },
+  background: {
+    frames: 37, // (6 rows × 6 cols) + 1 frame in row 7 = 36 + 1 = 37
+    file: require('../assets/backgrounds/spacelab_hall_background_1.png'),
+    grid: { rowsPerRow: [6, 6, 6, 6, 6, 6, 1] }, // Rows 0-5: 6 cols each, Row 6: 1 col
+    sheetWidth: 1920, // 6 columns × 320px per frame
+    sheetHeight: 1183 // 7 rows × 169px per frame
+  },
 };
 
 const FRAME_SIZE = 200;
@@ -62,7 +69,7 @@ const getFramePosition = (frameIndex, config) => {
   return { row: 0, col: 0, maxCols: 4 };
 };
 
-const AnimatedSprite = ({ animationType = 'default' }) => {
+const AnimatedSprite = ({ animationType = 'default', scale = 1.0 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const [currentAnimation, setCurrentAnimation] = useState(animationType);
@@ -137,8 +144,9 @@ const AnimatedSprite = ({ animationType = 'default' }) => {
     
     // Calculate transform values - move sprite sheet to show the correct frame
     // Negative values move the image left/up to position the frame in view
-    const frameOffsetX = -col * frameWidth;
-    const frameOffsetY = -row * frameHeight;
+    // Scale the offsets by the scale factor so they match the scaled sprite sheet
+    const frameOffsetX = -col * frameWidth * scale;
+    const frameOffsetY = -row * frameHeight * scale;
     
    // console.log(`[AnimatedSprite] Transform update - Frame: ${currentFrame}, Row: ${row}, Col: ${col}, X: ${frameOffsetX}, Y: ${frameOffsetY}, Animation: ${currentAnimation}`);
     
@@ -156,15 +164,24 @@ const AnimatedSprite = ({ animationType = 'default' }) => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [currentFrame, currentAnimation]);
+  }, [currentFrame, currentAnimation, scale]);
   
-  // Use actual image file dimensions for the sprite sheet
-  const spriteSheetWidth = config.sheetWidth;
-  const spriteSheetHeight = config.sheetHeight;
+  // Calculate actual frame dimensions for this animation
+  const numRows = config.grid.rows || (config.grid.rowsPerRow ? config.grid.rowsPerRow.length : 1);
+  const numCols = config.grid.cols || Math.max(...(config.grid.rowsPerRow || [4]));
+  const frameWidth = config.sheetWidth / numCols;
+  const frameHeight = config.sheetHeight / numRows;
+
+  // Use actual image file dimensions for the sprite sheet, scaled by the scale prop
+  const spriteSheetWidth = config.sheetWidth * scale;
+  const spriteSheetHeight = config.sheetHeight * scale;
+  // Use actual frame dimensions scaled by the scale prop for container size
+  const scaledContainerWidth = frameWidth * scale;
+  const scaledContainerHeight = frameHeight * scale;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.spriteContainer, { width: SCALED_FRAME_SIZE, height: SCALED_FRAME_SIZE }]}>
+      <View style={[styles.spriteContainer, { width: scaledContainerWidth, height: scaledContainerHeight }]}>
         <Animated.Image
           source={config.file}
           style={[

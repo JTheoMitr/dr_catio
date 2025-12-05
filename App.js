@@ -99,10 +99,14 @@ const GameScreen = () => {
       >
         <View style={styles.gameArea}>
           <View style={styles.gameContent}>
-            {/* Animation on the left */}
+            {/* Animations on the left - stacked vertically */}
             <View style={styles.animationContainer}>
               <AnimatedSprite 
                 animationType={animationType}
+              />
+              <AnimatedSprite 
+                animationType="background"
+                scale={0.65}
               />
             </View>
             
@@ -217,12 +221,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: MARGIN,
   },
   animationContainer: {
-    width: 130, // Fixed width to prevent pushing grid off screen
-    height: 200, // Fixed height for consistency
-    justifyContent: 'center',
+    width: 140, // Fixed width to accommodate 200px sprites
+    height: 380, // Fixed height for two 200px sprites stacked vertically
+    flexDirection: 'column', // Stack sprites vertically
+    justifyContent: 'center', // Center vertically to align with grid
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#00ffff',
+    backgroundColor: '#151519',
+    overflow: 'hidden', // Clip animations that exceed container bounds
     marginRight: 2, // Reduced margin to bring animation and grid closer
-    marginLeft: -10, // Move animation 60 pixels to the left
+    marginLeft: -10, // Move animation 10 pixels to the left
   },
   gridContainer: {
     flex: 0,
