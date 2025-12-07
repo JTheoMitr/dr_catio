@@ -39,13 +39,22 @@ const ANIMATION_CONFIG = {
     sheetWidth: 1920, // 6 columns × 320px per frame
     sheetHeight: 1183 // 7 rows × 169px per frame
   },
+
+  // 👇 New one for your meter:
+  mechMeter: {
+    frames: 54, // 9 col x 6 rows
+    file: require('../assets/animations/mech_energy_ui_gauge_200x200.png'),
+    grid: { rowsPerRow: [9, 9, 9, 9, 9, 9] }, // 6 rows of 9 cols, 54 frames total
+    sheetWidth: 1800, // 6 columns × 320px per frame
+    sheetHeight: 1200 // 7 rows × 169px per frame
+  },
 };
 
 const FRAME_SIZE = 200;
 const ANIMATION_SCALE = 1.0; // 100% of original size
 const SCALED_FRAME_SIZE = FRAME_SIZE * ANIMATION_SCALE;
-const FPS = 5;
-const FRAME_DURATION = 1000 / FPS; // milliseconds per frame
+const DEFAULT_FPS = 5; // default fps
+// const FRAME_DURATION = 1000 / FPS; // milliseconds per frame
 
 // Helper function to get row and column from frame index
 const getFramePosition = (frameIndex, config) => {
@@ -69,7 +78,7 @@ const getFramePosition = (frameIndex, config) => {
   return { row: 0, col: 0, maxCols: 4 };
 };
 
-const AnimatedSprite = ({ animationType = 'default', scale = 1.0 }) => {
+const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const [currentAnimation, setCurrentAnimation] = useState(animationType);
@@ -92,40 +101,46 @@ const AnimatedSprite = ({ animationType = 'default', scale = 1.0 }) => {
   }, [config.frames]);
 
   useEffect(() => {
+    if (!config) return;
+  
     // Clear any existing interval
     if (frameIntervalRef.current) {
       clearInterval(frameIntervalRef.current);
       frameIntervalRef.current = null;
     }
-
+  
     // Reset frame when animation changes
     setCurrentFrame(0);
     translateX.setValue(0);
     translateY.setValue(0);
-
-    // Update frame position - all animations loop
-    // Use ref to get current totalFrames to avoid stale closure
+  
+    // 🔢 Decide FPS:
+    // 1. use prop override if provided
+    // 2. else use per-animation config.fps if set
+    // 3. else fall back to DEFAULT_FPS
+    const effectiveFps = fps ?? config.fps ?? DEFAULT_FPS;
+    const frameDuration = 1000 / effectiveFps;
+  
     const updateFrame = () => {
       setCurrentFrame(prevFrame => {
         const totalFrames = totalFramesRef.current;
         const nextFrame = prevFrame + 1;
         const newFrame = nextFrame % totalFrames;
-       // console.log(`[AnimatedSprite] Frame update: ${prevFrame} -> ${newFrame} (total: ${totalFrames})`);
-        // Loop all animations using modulo
         return newFrame;
       });
     };
-
+  
     // Set up interval for frame updates
-    frameIntervalRef.current = setInterval(updateFrame, FRAME_DURATION);
-
+    frameIntervalRef.current = setInterval(updateFrame, frameDuration);
+  
     return () => {
       if (frameIntervalRef.current) {
         clearInterval(frameIntervalRef.current);
         frameIntervalRef.current = null;
       }
     };
-  }, [currentAnimation]); // Only depend on currentAnimation - translateX/translateY are stable refs
+  }, [currentAnimation, fps]);  // 👈 depend on fps as well
+  
 
   // Update translateX and translateY when currentFrame changes
   useEffect(() => {

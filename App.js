@@ -148,6 +148,11 @@ const GameScreen = () => {
             {/* Animations on the left - stacked vertically */}
             <View style={styles.animationContainer}>
               <AnimatedSprite 
+                animationType="mechMeter"
+                scale={0.65}
+                fps={2}
+              />
+              <AnimatedSprite 
                 animationType={animationType}
               />
               <AnimatedSprite 
