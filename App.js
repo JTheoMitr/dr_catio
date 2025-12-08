@@ -5,6 +5,7 @@ import MenuScreen from './components/MenuScreen';
 import GameGrid, { GRID_HEIGHT_WITH_BORDERS } from './components/GameGrid';
 import TouchControls from './components/TouchControls';
 import AnimatedSprite from './components/AnimatedSprite';
+import ParallaxStrip from './components/ParallaxStrip';
 import RotatingOverlaySprite from './components/RotatingOverlaySprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
@@ -149,7 +150,7 @@ const GameScreen = () => {
           <View style={styles.gameContent}>
             {/* Animations on the left - stacked vertically */}
             <View style={styles.animationContainer}>
-              <AnimatedSprite 
+              <AnimatedSprite // energy meter
                 animationType="mechMeter"
                 scale={0.55}
                 fps={1}
@@ -161,10 +162,22 @@ const GameScreen = () => {
                   duration={3000}   // faster / slower spin
                 />
               </AnimatedSprite>
-              <AnimatedSprite 
+              <AnimatedSprite // mech animation
                 animationType={animationType}
-              />
-              <AnimatedSprite 
+              >
+               {/* Parallax overlay window, centered over the sprite */}
+                <View style={StyleSheet.absoluteFillObject}>
+                  <View style={styles.meterParallaxCenter}>
+                    <ParallaxStrip
+                      source={require('./assets/foregrounds/city_layer_5.png')}
+                      windowWidth={192}
+                      windowHeight={108}
+                      duration={20000} // slower scroll
+                    />
+                  </View>
+                </View>  
+              </AnimatedSprite>
+              <AnimatedSprite // hallway...tbd
                 animationType="background"
                 scale={0.55}
               />
@@ -345,5 +358,10 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: 'bold',
     marginTop: 10,
+  },
+  meterParallaxCenter: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
