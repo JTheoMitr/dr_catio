@@ -5,6 +5,7 @@ import MenuScreen from './components/MenuScreen';
 import GameGrid, { GRID_HEIGHT_WITH_BORDERS } from './components/GameGrid';
 import TouchControls from './components/TouchControls';
 import AnimatedSprite from './components/AnimatedSprite';
+import RotatingOverlaySprite from './components/RotatingOverlaySprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
 import { Audio } from 'expo-av'; 
@@ -150,16 +151,22 @@ const GameScreen = () => {
             <View style={styles.animationContainer}>
               <AnimatedSprite 
                 animationType="mechMeter"
-                scale={0.65}
-                fps={2}
+                scale={0.55}
+                fps={1}
                 resetKey={energyUIResetCounter}
-              />
+              >
+                <RotatingOverlaySprite
+                  source={require('./assets/crosshair.png')}
+                  sizePercent={0.5}
+                  duration={3000}   // faster / slower spin
+                />
+              </AnimatedSprite>
               <AnimatedSprite 
                 animationType={animationType}
               />
               <AnimatedSprite 
                 animationType="background"
-                scale={0.65}
+                scale={0.55}
               />
             </View>
             

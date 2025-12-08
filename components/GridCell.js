@@ -9,7 +9,7 @@ const gunIconAssets = {
   [COLORS.YELLOW]: require('../assets/gun-icon-yellow.png'),
   [COLORS.GREEN]: require('../assets/gun-icon-green.png'),
   [COLORS.BLUE]: require('../assets/gun-icon-purple.png'),
-  [COLORS.GEAR]: require('../assets/Icon14_40.png'),
+  [COLORS.GEAR]: require('../assets/energy-refill-battery.png'),
 };
 
 const enemyAssets = {

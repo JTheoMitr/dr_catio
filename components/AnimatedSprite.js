@@ -78,7 +78,7 @@ const getFramePosition = (frameIndex, config) => {
   return { row: 0, col: 0, maxCols: 4 };
 };
 
-const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps, resetKey }) => {
+const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps, resetKey, children }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const [currentAnimation, setCurrentAnimation] = useState(animationType);
@@ -208,6 +208,7 @@ const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps, resetKey 
             },
           ]}
         />
+        {children}
       </View>
     </View>
   );
@@ -222,6 +223,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+    position: 'relative',
   },
   spriteSheet: {
     // Sprite sheet image - rendered at native pixel dimensions
