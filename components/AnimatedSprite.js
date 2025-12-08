@@ -78,7 +78,7 @@ const getFramePosition = (frameIndex, config) => {
   return { row: 0, col: 0, maxCols: 4 };
 };
 
-const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps }) => {
+const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps, resetKey }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const [currentAnimation, setCurrentAnimation] = useState(animationType);
@@ -139,7 +139,7 @@ const AnimatedSprite = ({ animationType = 'default', scale = 1.0, fps }) => {
         frameIntervalRef.current = null;
       }
     };
-  }, [currentAnimation, fps]);  // 👈 depend on fps as well
+  }, [currentAnimation, fps, resetKey]);  // 👈 depend on fps as well
   
 
   // Update translateX and translateY when currentFrame changes

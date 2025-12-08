@@ -34,6 +34,7 @@ const GameScreen = () => {
     removeParticle,
     animationTrigger,
     clearAnimationTrigger,
+    energyUIResetCounter,
   } = useGameState();
 
   const [animationType, setAnimationType] = useState('default');
@@ -151,6 +152,7 @@ const GameScreen = () => {
                 animationType="mechMeter"
                 scale={0.65}
                 fps={2}
+                resetKey={energyUIResetCounter}
               />
               <AnimatedSprite 
                 animationType={animationType}

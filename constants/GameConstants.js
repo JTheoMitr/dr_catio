@@ -7,9 +7,12 @@ export const COLORS = {
   YELLOW: 'yellow',
   GREEN: 'green',
   BLUE: 'blue',
+  GEAR: 'gear',
 };
 
-export const COLOR_VALUES = [COLORS.RED, COLORS.YELLOW, COLORS.GREEN, COLORS.BLUE];
+export const COLOR_VALUES = [COLORS.RED, COLORS.YELLOW, COLORS.GREEN, COLORS.BLUE, COLORS.GEAR];
+
+export const MECH_COLOR_VALUES = [COLORS.RED, COLORS.YELLOW, COLORS.GREEN, COLORS.BLUE];
 
 // Scoring
 export const BASE_SCORE_PER_MECH = 100;

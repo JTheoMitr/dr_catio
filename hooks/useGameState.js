@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GRID_WIDTH, GRID_HEIGHT, STARTING_MECH_COUNT, MECHS_PER_LEVEL, BASE_SCORE_PER_MECH, MULTIPLIER_PER_ADDITIONAL_MECH, GAME_STATES } from '../constants/GameConstants';
+import { GRID_WIDTH, GRID_HEIGHT, STARTING_MECH_COUNT, MECHS_PER_LEVEL, BASE_SCORE_PER_MECH, MULTIPLIER_PER_ADDITIONAL_MECH, GAME_STATES, COLORS } from '../constants/GameConstants';
 import {
   generateGunIcon,
   generateRandomMechs,
@@ -27,6 +27,7 @@ const useGameState = () => {
   const [gameState, setGameState] = useState(GAME_STATES.PLAYING);
   const [particles, setParticles] = useState([]);
   const [animationTrigger, setAnimationTrigger] = useState(null);
+  const [energyUIResetCounter, setEnergyUIResetCounter] = useState(0);
   
   const fallTimerRef = useRef(null);
   const gravityTimerRef = useRef(null);
@@ -251,9 +252,23 @@ const useGameState = () => {
       // Trigger match animation when mechs are destroyed
       setAnimationTrigger('match');
     } else if (allMatches.length > 0) {
-      // Matches with no mechs: award 25 points
+      // Check if any of the matched cells were GEAR color
+      const hadGearMatch = allMatches.some(({ row, col }) => {
+        const key = `${row}-${col}`;
+        const color = matchColors.get(key);
+        return color === COLORS.GEAR;
+      });
+    
+      // Base score for non-mech matches (you can tweak this if gear should be worth more)
       setScore(prev => prev + 25);
-      console.log(`Match cleared (no mechs), Score: 25`);
+    
+      if (hadGearMatch) {
+        console.log('Gear match! Meter reset + 25 points');
+        // Bump counter to tell the mech meter UI to restart
+        setEnergyUIResetCounter(prev => prev + 1);
+      } else {
+        console.log('Match cleared (no mechs, no gear), Score: 25');
+      }
     }
     
     // Check level complete
@@ -432,6 +447,7 @@ const useGameState = () => {
     initializeLevel,
     animationTrigger,
     clearAnimationTrigger,
+    energyUIResetCounter,
   };
 };
 

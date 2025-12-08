@@ -1,8 +1,12 @@
-import { GRID_WIDTH, GRID_HEIGHT, COLOR_VALUES } from '../constants/GameConstants';
+import { GRID_WIDTH, GRID_HEIGHT, COLOR_VALUES, MECH_COLOR_VALUES } from '../constants/GameConstants';
 
 // Generate a random color
 export const getRandomColor = () => {
   return COLOR_VALUES[Math.floor(Math.random() * COLOR_VALUES.length)];
+};
+
+export const getRandomMechColor = () => {
+  return MECH_COLOR_VALUES[Math.floor(Math.random() * MECH_COLOR_VALUES.length)];
 };
 
 // Generate a random gun icon (2 blocks, can be same or different colors)
@@ -31,7 +35,7 @@ export const generateRandomMechs = (count) => {
       mechs.push({
         row,
         col,
-        color: getRandomColor(),
+        color: getRandomMechColor(),
       });
     }
   }
