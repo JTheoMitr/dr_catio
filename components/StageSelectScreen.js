@@ -6,17 +6,102 @@ import {
   StyleSheet,
   TouchableOpacity,
   ImageBackground,
+  Animated,
 } from 'react-native';
+import { Audio } from 'expo-av';
 
 const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
-  // For now, just show "Campaign 1" in the header; logic can expand later
+  // SFX for button click
+  const clickSfxRef = React.useRef(null);
+  const clickDurationRef = React.useRef(800); // default fallback ms
+
+  // Fade animation for screen
+  const fadeAnim = React.useRef(new Animated.Value(1)).current;
+  const isTransitioningRef = React.useRef(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const loadSfx = async () => {
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require('../assets/sfx/AANN2_Synthwave_Future_Synthwave_Arp_Dmaj.mp3')
+        );
+        if (!isMounted) {
+          await sound.unloadAsync();
+          return;
+        }
+        clickSfxRef.current = sound;
+
+        const status = await sound.getStatusAsync();
+        if (status.isLoaded && status.durationMillis != null) {
+          clickDurationRef.current = status.durationMillis;
+        }
+      } catch (e) {
+        console.warn('Error loading stage select SFX', e);
+      }
+    };
+
+    loadSfx();
+
+    return () => {
+      isMounted = false;
+      if (clickSfxRef.current) {
+        clickSfxRef.current.unloadAsync();
+        clickSfxRef.current = null;
+      }
+    };
+  }, []);
+
+  const playClickSfx = async () => {
+    try {
+      if (!clickSfxRef.current) return;
+      const status = await clickSfxRef.current.getStatusAsync();
+      if (!status.isLoaded) return;
+
+      await clickSfxRef.current.setPositionAsync(0);
+      await clickSfxRef.current.playAsync();
+    } catch (e) {
+      console.warn('Error playing stage select SFX', e);
+    }
+  };
+
+  const playClickSfxAndFadeAndWait = async () => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    try {
+      if (!clickSfxRef.current) return;
+
+      const status = await clickSfxRef.current.getStatusAsync();
+      const duration = status.isLoaded && status.durationMillis != null
+        ? status.durationMillis
+        : clickDurationRef.current;
+
+      // Start fade-out while sound plays
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration,
+        useNativeDriver: true,
+      }).start();
+
+      await clickSfxRef.current.setPositionAsync(0);
+      await clickSfxRef.current.playAsync();
+
+      // Wait for the sound duration before navigating
+      await new Promise(resolve => setTimeout(resolve, duration));
+    } catch (e) {
+      console.warn('Error in playClickSfxAndFadeAndWait', e);
+    }
+  };
+
   return (
     <ImageBackground
-      source={require('../assets/backgrounds/stage_select_bg.png')} // 🔁 update if needed
+      source={require('../assets/backgrounds/stage_select_bg.png')}
       style={styles.background}
       resizeMode="cover"
     >
-      <View style={styles.overlay}>
+      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         {/* Header */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
@@ -40,27 +125,36 @@ const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
                   <TouchableOpacity
                     key={stageNumber}
                     style={[styles.stageButton, styles.stageActive]}
-                    onPress={() => onSelectStage(stageNumber)}
+                    onPress={async () => {
+                      await playClickSfxAndFadeAndWait();
+                      onSelectStage(stageNumber);
+                    }}
+                    activeOpacity={0.8}
                   >
                     <Text style={styles.stageText}>Stage {stageNumber}</Text>
-                    <Text style={styles.stageSubText}>Levels {(stageNumber - 1) * 5 + 1}–{stageNumber * 5}</Text>
+                    <Text style={styles.stageSubText}>
+                      Levels {(stageNumber - 1) * 5 + 1}–{stageNumber * 5}
+                    </Text>
                   </TouchableOpacity>
                 );
               }
 
+              // Locked stages: just play SFX (no fade, no nav)
               return (
-                <View
+                <TouchableOpacity
                   key={stageNumber}
                   style={[styles.stageButton, styles.stageLocked]}
+                  onPress={playClickSfx}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.stageText}>Stage {stageNumber}</Text>
                   <Text style={styles.stageSubText}>Locked</Text>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
         </View>
-      </View>
+      </Animated.View>
     </ImageBackground>
   );
 };

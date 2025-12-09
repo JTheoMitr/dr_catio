@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, Dimensions, StyleSheet as RNStyleSheet } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, Dimensions, StyleSheet as RNStyleSheet, ImageBackground } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import MenuScreen from './components/MenuScreen';
 import GameGrid, { GRID_HEIGHT_WITH_BORDERS } from './components/GameGrid';
@@ -128,6 +128,12 @@ const GameScreen = () => {
   }, []);
 
   return (
+    <ImageBackground
+      source={require('./assets/backgrounds/stage_1_bgnd.png')}
+      style={styles.gameBackground}
+      resizeMode="cover"
+    >
+
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
       
@@ -229,6 +235,7 @@ const GameScreen = () => {
         </View>
       )}
     </SafeAreaView>
+    </ImageBackground>
   );
 };
 
@@ -378,7 +385,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -476,5 +483,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  gameBackground: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
 });
