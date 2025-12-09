@@ -239,6 +239,76 @@ export default function App() {
   const [selectedCampaign, setSelectedCampaign] = useState(1);
   const [selectedStage, setSelectedStage] = useState(1);
 
+  // 🔊 Menu / meta-screen music
+  const menuBgmRef = React.useRef(null);
+
+    // 🔊 Handle menu / campaign / stage music
+    React.useEffect(() => {
+      let isMounted = true;
+  
+      const updateMenuMusic = async () => {
+        try {
+          // When we're IN GAME, stop menu music
+          if (currentScreen === 'game') {
+            if (menuBgmRef.current) {
+              const status = await menuBgmRef.current.getStatusAsync();
+              if (status.isLoaded && status.isPlaying) {
+                await menuBgmRef.current.stopAsync();
+              }
+            }
+            return;
+          }
+  
+          // For all non-game screens (menu, campaignSelect, stageSelect):
+          if (!menuBgmRef.current) {
+            // Load + play menu track
+            await Audio.setAudioModeAsync({
+              playsInSilentModeIOS: true,
+            });
+  
+            const { sound } = await Audio.Sound.createAsync(
+              require('./assets/music/SMMOG_Menu_1.mp3')
+            );
+  
+            if (!isMounted) {
+              await sound.unloadAsync();
+              return;
+            }
+  
+            menuBgmRef.current = sound;
+            await sound.setIsLoopingAsync(true);
+            await sound.playAsync();
+          } else {
+            // If it's already loaded but not playing, resume it
+            const status = await menuBgmRef.current.getStatusAsync();
+            if (status.isLoaded && !status.isPlaying) {
+              await menuBgmRef.current.playAsync();
+            }
+          }
+        } catch (e) {
+          console.warn('Error handling menu music', e);
+        }
+      };
+  
+      updateMenuMusic();
+  
+      return () => {
+        isMounted = false;
+      };
+    }, [currentScreen, menuBgmRef]);
+
+      // Optional: cleanup menu music on app unmount
+  React.useEffect(() => {
+    return () => {
+      if (menuBgmRef.current) {
+        menuBgmRef.current.unloadAsync();
+        menuBgmRef.current = null;
+      }
+    };
+  }, []);
+
+  
+
   const handleStartFromMenu = () => {
     setCurrentScreen('campaignSelect');
   };
