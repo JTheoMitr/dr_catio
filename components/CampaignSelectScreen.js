@@ -1,0 +1,117 @@
+// components/CampaignSelectScreen.js
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ImageBackground,
+} from 'react-native';
+
+const CampaignSelectScreen = ({ onBack, onSelectCampaign }) => {
+  return (
+    <ImageBackground
+      source={require('../assets/backgrounds/campaign_select_bg.png')} // 🔁 update if needed
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <Text style={styles.backButtonText}>{'<'} Menu</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Select Campaign</Text>
+          <View style={{ width: 80 }} />
+        </View>
+
+        <View style={styles.centerContent}>
+          {/* Campaign 1 - active */}
+          <TouchableOpacity
+            style={[styles.campaignButton, styles.campaignActive]}
+            onPress={() => onSelectCampaign(1)}
+          >
+            <Text style={styles.campaignTitle}>Campaign 1</Text>
+            <Text style={styles.campaignSubtitle}>Main Story</Text>
+          </TouchableOpacity>
+
+          {/* Campaign 2 - inactive / locked */}
+          <View style={[styles.campaignButton, styles.campaignDisabled]}>
+            <Text style={styles.campaignTitle}>Campaign 2</Text>
+            <Text style={styles.campaignSubtitle}>Coming Soon</Text>
+          </View>
+
+          {/* Campaign 3 - inactive / locked */}
+          <View style={[styles.campaignButton, styles.campaignDisabled]}>
+            <Text style={styles.campaignTitle}>Campaign 3</Text>
+            <Text style={styles.campaignSubtitle}>Coming Soon</Text>
+          </View>
+        </View>
+      </View>
+    </ImageBackground>
+  );
+};
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 5, 15, 0.4)',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  backButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  campaignButton: {
+    borderRadius: 10,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  campaignActive: {
+    backgroundColor: 'rgba(0, 200, 255, 0.2)',
+    borderColor: '#00f0ff',
+  },
+  campaignDisabled: {
+    backgroundColor: 'rgba(50, 50, 60, 0.7)',
+    borderColor: '#555',
+  },
+  campaignTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  campaignSubtitle: {
+    color: '#ccc',
+    fontSize: 13,
+    marginTop: 4,
+  },
+});
+
+export default CampaignSelectScreen;

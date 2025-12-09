@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, Dimensions, StyleSheet as RNStyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import MenuScreen from './components/MenuScreen';
 import GameGrid, { GRID_HEIGHT_WITH_BORDERS } from './components/GameGrid';
@@ -9,15 +9,19 @@ import ParallaxStrip from './components/ParallaxStrip';
 import RotatingOverlaySprite from './components/RotatingOverlaySprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
-import { Audio } from 'expo-av'; 
+import { Audio } from 'expo-av';
+
+// NEW:
+import CampaignSelectScreen from './components/CampaignSelectScreen';
+import StageSelectScreen from './components/StageSelectScreen';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_AREA_HEIGHT = 45; // Space at bottom for swiping (90% of 50px to show full bottom row)
-const MARGIN_PERCENT = 0.025; // 2.5% margin
-const MIN_MARGIN = 15; // Minimum 15px margin
+const SWIPE_AREA_HEIGHT = 45;
+const MARGIN_PERCENT = 0.025;
+const MIN_MARGIN = 15;
 const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
 
-// Game Screen Component - wraps the game logic so hook is only called when needed
+// --- GameScreen stays almost exactly as you have it now ---
 const GameScreen = () => {
   const {
     grid,
@@ -51,13 +55,12 @@ const GameScreen = () => {
 
     const setupAudio = async () => {
       try {
-        // Optional: make sure audio plays even in silent mode on iOS
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
         });
 
         const { sound } = await Audio.Sound.createAsync(
-          require('./assets/music/SMMOG_Lvl1.mp3')  // ⬅️ path relative to App.js
+          require('./assets/music/SMMOG_Lvl1.mp3')
         );
 
         if (!isMounted) {
@@ -67,17 +70,16 @@ const GameScreen = () => {
 
         bgmRef.current = sound;
 
-        // Loop background track
         await sound.setIsLoopingAsync(true);
         await sound.playAsync();
       } catch (e) {
-        console.warn('Error loading/playing SMMOG.mp3', e);
+        console.warn('Error loading/playing SMMOG_Lvl1.mp3', e);
       }
     };
 
     setupAudio();
 
-     // Cleanup when GameScreen unmounts
+    // Cleanup when GameScreen unmounts
     return () => {
       isMounted = false;
       if (bgmRef.current) {
@@ -92,7 +94,6 @@ const GameScreen = () => {
     if (animationTrigger) {
       if (animationTrigger === 'match') {
         setAnimationType('match');
-        // Start 3 second timer to return to default
         if (matchTimerRef.current) {
           clearTimeout(matchTimerRef.current);
         }
@@ -102,20 +103,17 @@ const GameScreen = () => {
         }, 3000);
       } else if (animationTrigger === 'win') {
         setAnimationType('win');
-        // Clear any existing match timer
         if (matchTimerRef.current) {
           clearTimeout(matchTimerRef.current);
           matchTimerRef.current = null;
         }
       } else if (animationTrigger === 'lose') {
         setAnimationType('lose');
-        // Clear any existing match timer
         if (matchTimerRef.current) {
           clearTimeout(matchTimerRef.current);
           matchTimerRef.current = null;
         }
       }
-      // Clear the trigger after processing to prevent retriggering
       clearAnimationTrigger();
     }
   }, [animationTrigger, clearAnimationTrigger]);
@@ -148,7 +146,7 @@ const GameScreen = () => {
       >
         <View style={styles.gameArea}>
           <View style={styles.gameContent}>
-            {/* Animations on the left - stacked vertically */}
+            {/* Left animation column */}
             <View style={styles.animationContainer}>
               <AnimatedSprite // energy meter
                 animationType="mechMeter"
@@ -159,25 +157,26 @@ const GameScreen = () => {
                 <RotatingOverlaySprite
                   source={require('./assets/crosshair.png')}
                   sizePercent={0.5}
-                  duration={3000}   // faster / slower spin
+                  duration={3000}
                 />
               </AnimatedSprite>
-              <AnimatedSprite // mech animation
+
+              <AnimatedSprite // mech animation with parallax foreground
                 animationType={animationType}
               >
-               {/* Parallax overlay window, centered over the sprite */}
-                <View style={StyleSheet.absoluteFillObject}>
+                <View style={RNStyleSheet.absoluteFillObject}>
                   <View style={styles.meterParallaxCenter}>
                     <ParallaxStrip
                       source={require('./assets/foregrounds/city_layer_5.png')}
                       windowWidth={192}
                       windowHeight={108}
-                      duration={20000} // slower scroll
+                      duration={20000}
                     />
                   </View>
                 </View>  
               </AnimatedSprite>
-              <AnimatedSprite // hallway...tbd
+
+              <AnimatedSprite // hallway / background
                 animationType="background"
                 scale={0.55}
               />
@@ -199,7 +198,9 @@ const GameScreen = () => {
 
       {/* Swipe Area (bottom padding) */}
       <View style={[styles.swipeArea, { height: SWIPE_AREA_HEIGHT }]}>
-        <Text style={styles.swipeAreaText}>Swipe to move • Tap to rotate • Swipe down to drop</Text>
+        <Text style={styles.swipeAreaText}>
+          Swipe to move • Tap to rotate • Swipe down to drop
+        </Text>
       </View>
 
       {/* Game Over / Level Complete Overlay */}
@@ -231,33 +232,75 @@ const GameScreen = () => {
   );
 };
 
+// --- Top-level app navigation ---
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState('menu'); // 'menu', 'game', 'options', etc.
+  // 'menu' → 'campaignSelect' → 'stageSelect' → 'game'
+  const [currentScreen, setCurrentScreen] = useState('menu');
+  const [selectedCampaign, setSelectedCampaign] = useState(1);
+  const [selectedStage, setSelectedStage] = useState(1);
 
-  const handleStartGame = () => {
+  const handleStartFromMenu = () => {
+    setCurrentScreen('campaignSelect');
+  };
+
+  const handleSelectCampaign = (campaignId) => {
+    setSelectedCampaign(campaignId);
+    setCurrentScreen('stageSelect');
+  };
+
+  const handleSelectStage = (stageId) => {
+    setSelectedStage(stageId);
+    // For now, any unlocked stage -> start GameScreen at level 1
     setCurrentScreen('game');
   };
 
-  // Show menu screen
+  // Menu
   if (currentScreen === 'menu') {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar style="auto" />
-        <MenuScreen onStartGame={handleStartGame} />
+        <MenuScreen onStartGame={handleStartFromMenu} />
       </SafeAreaView>
     );
   }
 
-  // Show game screen (GameScreen component will only mount when currentScreen === 'game')
+  // Campaign select
+  if (currentScreen === 'campaignSelect') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        <CampaignSelectScreen
+          onBack={() => setCurrentScreen('menu')}
+          onSelectCampaign={handleSelectCampaign}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Stage select
+  if (currentScreen === 'stageSelect') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        <StageSelectScreen
+          campaignId={selectedCampaign}
+          onBack={() => setCurrentScreen('campaignSelect')}
+          onSelectStage={handleSelectStage}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Game
   if (currentScreen === 'game') {
     return <GameScreen />;
   }
 
-  // Fallback (shouldn't reach here, but just in case)
+  // Fallback
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
-      <MenuScreen onStartGame={handleStartGame} />
+      <MenuScreen onStartGame={handleStartFromMenu} />
     </SafeAreaView>
   );
 }
@@ -294,17 +337,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: MARGIN,
   },
   animationContainer: {
-    width: 125, // Fixed width to accommodate 200px sprites
-    height: GRID_HEIGHT_WITH_BORDERS, // Match GameGrid height
-    flexDirection: 'column', // Stack sprites vertically
-    justifyContent: 'center', // Center vertically to align with grid
+    width: 125,
+    height: GRID_HEIGHT_WITH_BORDERS,
+    flexDirection: 'column',
+    justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#00ffff',
     backgroundColor: '#151519',
-    overflow: 'hidden', // Clip animations that exceed container bounds
-    marginRight: 2, // Reduced margin to bring animation and grid closer
-    marginLeft: 0, // Move animation 10 pixels to the left
+    overflow: 'hidden',
+    marginRight: 2,
+    marginLeft: 0,
   },
   gridContainer: {
     flex: 0,
