@@ -42,6 +42,7 @@ const GameScreen = () => {
     animationTrigger,
     clearAnimationTrigger,
     energyUIResetCounter,
+    triggerMeterGameOver,
   } = useGameState();
 
   const [animationType, setAnimationType] = useState('default');
@@ -157,9 +158,11 @@ const GameScreen = () => {
             <View style={styles.animationContainer}>
               <AnimatedSprite // energy meter
                 animationType="mechMeter"
-                scale={0.55}
+                scale={0.45}
                 fps={1}
-                resetKey={energyUIResetCounter}
+                resetKey={energyUIResetCounter}  // gear matches already bump this
+                loop={false}                      // <– important: don’t loop
+                onDeplete={triggerMeterGameOver}  // <– call into game logic
               >
                 <RotatingOverlaySprite
                   source={require('./assets/crosshair.png')}

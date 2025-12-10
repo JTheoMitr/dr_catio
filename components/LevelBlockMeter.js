@@ -81,11 +81,13 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+    marginLeft: 2,
   },
   glow: {
     position: 'absolute',
-    width: '110%',   // a tiny bit larger to feel like a glow
-    height: '110%',
+    marginLeft: 2,
+    width: '100%',   // a tiny bit larger to feel like a glow
+    height: '100%',
   },
 });
 

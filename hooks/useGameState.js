@@ -308,6 +308,16 @@ const useGameState = () => {
     }
   }, [currentGunIcon, gunIconPosition, grid, gameState]);
 
+  // Add this near your other callbacks (moveLeft, drop, etc.)
+  const triggerMeterGameOver = useCallback(() => {
+    // Only trigger if we’re actively playing
+    if (gameState !== GAME_STATES.PLAYING) return;
+
+    console.log('Game over from mech meter!');
+    setGameState(GAME_STATES.GAME_OVER);
+    setAnimationTrigger('lose');
+  }, [gameState]);
+
   // Rotate gun icon
   const rotate = useCallback(() => {
     if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
@@ -448,6 +458,7 @@ const useGameState = () => {
     animationTrigger,
     clearAnimationTrigger,
     energyUIResetCounter,
+    triggerMeterGameOver,
   };
 };
 
