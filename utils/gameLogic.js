@@ -24,9 +24,13 @@ export const generateGunIcon = () => {
 export const generateRandomMechs = (count) => {
   const mechs = [];
   const positions = new Set();
+
+    // Avoid top 4 rows (0–3) 
+  const minRow = 4;
+  const maxRow = GRID_HEIGHT - 1; // or GRID_HEIGHT - 2 to only avoid last row (bottom row)
   
   while (mechs.length < count) {
-    const row = Math.floor(Math.random() * (GRID_HEIGHT - 4)) + 2; // Avoid top rows
+    const row = Math.floor(Math.random() * (maxRow - minRow + 1)) + minRow;
     const col = Math.floor(Math.random() * GRID_WIDTH);
     const key = `${row}-${col}`;
     
