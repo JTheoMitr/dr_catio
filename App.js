@@ -6,6 +6,7 @@ import GameGrid, { GRID_HEIGHT_WITH_BORDERS } from './components/GameGrid';
 import TouchControls from './components/TouchControls';
 import AnimatedSprite from './components/AnimatedSprite';
 import ParallaxStrip from './components/ParallaxStrip';
+import LevelBlockMeter from './components/LevelBlockMeter';
 import RotatingOverlaySprite from './components/RotatingOverlaySprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
@@ -182,10 +183,9 @@ const GameScreen = () => {
                 </View>  
               </AnimatedSprite>
 
-              <AnimatedSprite // hallway / background
-                animationType="background"
-                scale={0.55}
-              />
+              {/* Level Block Meter */}
+              <LevelBlockMeter level={level} size={120} />
+
             </View>
             
             {/* Grid on the right */}
