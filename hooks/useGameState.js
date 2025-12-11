@@ -11,7 +11,7 @@ import {
   isGameOver,
   isLevelComplete,
 } from '../utils/gameLogic';
-import { playRotateSfx } from '../utils/sfx';
+import { playSfx } from '../utils/sfx';
 
 
 const FALL_INTERVAL = 1000; // 1 second per fall
@@ -255,6 +255,9 @@ const useGameState = () => {
       }
       setScore(prev => prev + turnScore);
       console.log(`Mechs destroyed: ${totalMechsDestroyed}, Score: ${turnScore}`);
+
+      // 🔊 mech destroyed sound
+      playSfx('kill');
       // Trigger match animation when mechs are destroyed
       setAnimationTrigger('match');
     } else if (allMatches.length > 0) {
@@ -272,8 +275,10 @@ const useGameState = () => {
         console.log('Gear match! Meter reset + 25 points');
         // Bump counter to tell the mech meter UI to restart
         setEnergyUIResetCounter(prev => prev + 1);
+        playSfx('energy');
       } else {
         console.log('Match cleared (no mechs, no gear), Score: 25');
+        playSfx('match');
       }
     }
     
@@ -331,7 +336,7 @@ const useGameState = () => {
     if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
 
      // 🔊 PLAY ROTATE SOUND
-    playRotateSfx();
+    playSfx('rotate');
     
     const rotated = rotateGunIcon(currentGunIcon);
     const currentRow = gunIconPosition.row;
@@ -389,6 +394,9 @@ const useGameState = () => {
     
     // Place the gun icon at the final position
     placeGunIcon(currentGunIcon, { ...gunIconPosition, row: newRow }, currentGrid);
+
+    // 🔊 play drop sound
+    playSfx('drop');
     
     console.log('Piece dropped');
   }, [currentGunIcon, gunIconPosition, gameState, placeGunIcon]);
