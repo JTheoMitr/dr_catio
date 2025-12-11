@@ -24,6 +24,9 @@ const useGameState = () => {
   const [gunIconPosition, setGunIconPosition] = useState(null);
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
+  const [gameOverReason, setGameOverReason] = useState(null); 
+// e.g. 'stack' | 'energy' | null
+
   const [gameState, setGameState] = useState(GAME_STATES.PLAYING);
   const [particles, setParticles] = useState([]);
   const [animationTrigger, setAnimationTrigger] = useState(null);
@@ -67,6 +70,7 @@ const useGameState = () => {
     setGunIconPosition({ row: 0, col: Math.floor(GRID_WIDTH / 2) - 1 });
     setGameState(GAME_STATES.PLAYING);
     setAnimationTrigger(null); // Reset animation trigger
+    setGameOverReason(null);   // 👈 reset reason
   }, []);
 
   // Place gun icon on grid
@@ -283,6 +287,7 @@ const useGameState = () => {
       console.log('Game over!');
       setGameState(GAME_STATES.GAME_OVER);
       setAnimationTrigger('lose');
+      setGameOverReason('stack');  // 👈 standard “board filled” loss
     }
   }, []);
 
@@ -316,6 +321,7 @@ const useGameState = () => {
     console.log('Game over from mech meter!');
     setGameState(GAME_STATES.GAME_OVER);
     setAnimationTrigger('lose');
+    setGameOverReason('energy');   // 👈 this is the key
   }, [gameState]);
 
   // Rotate gun icon
@@ -459,6 +465,7 @@ const useGameState = () => {
     clearAnimationTrigger,
     energyUIResetCounter,
     triggerMeterGameOver,
+    gameOverReason,
   };
 };
 

@@ -43,6 +43,7 @@ const GameScreen = () => {
     clearAnimationTrigger,
     energyUIResetCounter,
     triggerMeterGameOver,
+    gameOverReason,
   } = useGameState();
 
   const [animationType, setAnimationType] = useState('default');
@@ -219,6 +220,10 @@ const GameScreen = () => {
             <Text style={styles.overlayTitle}>Game Over!</Text>
             <Text style={styles.overlayText}>Final Score: {score}</Text>
             <Text style={styles.overlayText}>Level Reached: {level}</Text>
+
+            {gameOverReason === 'energy' && (
+              <Text style={styles.overlayText}>Energy depleted!</Text>
+            )}
             <Text style={styles.overlayButton} onPress={restartLevel}>
               Try Again
             </Text>
