@@ -11,6 +11,8 @@ import {
   isGameOver,
   isLevelComplete,
 } from '../utils/gameLogic';
+import { playRotateSfx } from '../utils/sfx';
+
 
 const FALL_INTERVAL = 1000; // 1 second per fall
 
@@ -327,6 +329,9 @@ const useGameState = () => {
   // Rotate gun icon
   const rotate = useCallback(() => {
     if (gameState !== GAME_STATES.PLAYING || !currentGunIcon || !gunIconPosition) return;
+
+     // 🔊 PLAY ROTATE SOUND
+    playRotateSfx();
     
     const rotated = rotateGunIcon(currentGunIcon);
     const currentRow = gunIconPosition.row;
