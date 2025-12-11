@@ -1,38 +1,91 @@
-import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Dimensions, Animated, Platform } from 'react-native';
 import { GRID_WIDTH, GRID_HEIGHT } from '../constants/GameConstants';
 import GridCell from './GridCell';
 import ParticleEffect from './ParticleEffect';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Account for animation container (200px) + margins + buffer
-// Animation: 200px width + MARGIN (right margin) - 20px (left margin offset) + buffer
 const MARGIN_PERCENT = 0.025;
 const MIN_MARGIN = 15;
 const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
-const ANIMATION_SPACE = 200 + MARGIN - 60; // Animation width + right margin - left offset
-const BUFFER = 15; // Extra buffer for spacing (reduced to give more space to grid)
+const ANIMATION_SPACE = 200 + MARGIN - 60;
+const BUFFER = 15;
 const BASE_CELL_SIZE = Math.floor((SCREEN_WIDTH - ANIMATION_SPACE - BUFFER) / GRID_WIDTH);
-export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 1.2); // Scale to 110% (0.8 * 1.15 = 0.92, ~15% larger than previous)
-const CELL_BORDER_WIDTH = 0.5; // Border width from GridCell styles
+export const CELL_SIZE = Math.floor(BASE_CELL_SIZE * 1.2);
+const CELL_BORDER_WIDTH = 0.5;
 const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
-// Account for cell borders: only count outer borders (left + right = 1px, top + bottom = 1px)
-// Internal borders overlap and don't add to total size
 const GRID_WIDTH_WITH_BORDERS = (CELL_SIZE * GRID_WIDTH) + (CELL_BORDER_WIDTH * 2) + 3;
 export const GRID_HEIGHT_WITH_BORDERS = (CELL_SIZE * GRID_HEIGHT) + (CELL_BORDER_WIDTH * 2) + 3;
 
 const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemoveParticle }) => {
+  // 🔥 Glow animation value (0–1)
+  const glowAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Loop a gentle in/out pulse
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: false, // color/shadow animations must be JS-driven
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 1200,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  }, [glowAnim]);
+
+  // Interpolated border color between 80% and 100% opacity
+  const animatedBorderColor = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(0, 255, 255, 0.8)', 'rgba(0, 255, 255, 1)'],
+  });
+
+  // Optional extra glow via shadow radius (iOS mainly)
+  const animatedShadowRadius =
+    Platform.OS === 'ios'
+      ? glowAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [4, 10],
+        })
+      : 0;
+
   return (
     <View style={styles.container} pointerEvents="box-none">
       <View style={styles.gridContainer} pointerEvents="box-none">
-        <View style={[styles.grid, { width: GRID_WIDTH_WITH_BORDERS, height: GRID_HEIGHT_WITH_BORDERS }]} pointerEvents="none">
+        
+        {/* 🔮 Animated neon border */}
+        <Animated.View
+          style={[
+            styles.grid,
+            {
+              width: GRID_WIDTH_WITH_BORDERS,
+              height: GRID_HEIGHT_WITH_BORDERS,
+              borderColor: animatedBorderColor,
+              // subtle glow-ish shadow
+              shadowColor: '#00ffff',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.8,
+              shadowRadius: animatedShadowRadius,
+              elevation: 6, // Android "glow-ish" via elevation
+            },
+          ]}
+          pointerEvents="none"
+        >
           {grid.map((row, rowIndex) => (
             <View key={rowIndex} style={styles.gridRow} pointerEvents="none">
               {row.map((cell, colIndex) => {
-                // Check if this cell is part of the current falling gun icon
                 let gunIconCell = null;
                 if (currentGunIcon && gunIconPosition) {
-                  const gunIconPositions = getGunIconPositions(currentGunIcon, gunIconPosition.row, gunIconPosition.col);
+                  const gunIconPositions = getGunIconPositions(
+                    currentGunIcon,
+                    gunIconPosition.row,
+                    gunIconPosition.col
+                  );
                   const gunIconPos = gunIconPositions.find(
                     p => p.row === rowIndex && p.col === colIndex
                   );
@@ -43,7 +96,7 @@ const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemovePa
                     };
                   }
                 }
-                
+
                 return (
                   <GridCell
                     key={`${rowIndex}-${colIndex}`}
@@ -54,15 +107,15 @@ const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemovePa
               })}
             </View>
           ))}
-        </View>
-        
+        </Animated.View>
+
         {/* Particle Effects - positioned relative to grid */}
         {particles && particles.map(particle => (
           <ParticleEffect
             key={particle.id}
-            position={{ 
-              x: particle.position.col * CELL_SIZE + CELL_SIZE / 2, 
-              y: particle.position.row * CELL_SIZE + CELL_SIZE / 2 
+            position={{
+              x: particle.position.col * CELL_SIZE + CELL_SIZE / 2,
+              y: particle.position.row * CELL_SIZE + CELL_SIZE / 2,
             }}
             color={particle.color}
             onComplete={() => onRemoveParticle && onRemoveParticle(particle.id)}
@@ -76,30 +129,19 @@ const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemovePa
 // Helper to get gun icon positions (same logic as gameLogic)
 const getGunIconPositions = (gunIcon, row, col) => {
   const positions = [];
-  
-  // 0°: horizontal, left-right (top color on left, bottom color on right)
-  // 90°: vertical, top-bottom (top color on top, bottom color on bottom)
-  // 180°: horizontal, right-left (top color on right, bottom color on left) - flipped
-  // 270°: vertical, bottom-top (top color on bottom, bottom color on top) - flipped
-  
   if (gunIcon.rotation === 0) {
-    // Horizontal: left and right
     positions.push({ row, col, isTop: true });
     positions.push({ row, col: col + 1, isTop: false });
   } else if (gunIcon.rotation === 1) {
-    // Vertical: top and bottom
     positions.push({ row, col, isTop: true });
     positions.push({ row: row + 1, col, isTop: false });
   } else if (gunIcon.rotation === 2) {
-    // Horizontal: right and left (flipped)
     positions.push({ row, col: col + 1, isTop: true });
     positions.push({ row, col, isTop: false });
   } else if (gunIcon.rotation === 3) {
-    // Vertical: bottom and top (flipped)
     positions.push({ row: row + 1, col, isTop: true });
     positions.push({ row, col, isTop: false });
   }
-  
   return positions;
 };
 
@@ -115,17 +157,15 @@ const styles = StyleSheet.create({
   },
   grid: {
     borderWidth: 2,
-    borderColor: '#00ffff', // neon border
-    backgroundColor: '#151519', // V Dark Blue, almost black
+    borderColor: '#00ffff', // base neon color (will be overridden by Animated)
+    backgroundColor: '#151519',
     width: GRID_WIDTH_WITH_BORDERS,
-    paddingRight: 2, // Shift cells left by 1px to nestle them in the border
-    paddingBottom: 2, // Shift cells up by 1px to nestle them in the border
+    paddingRight: 2,
+    paddingBottom: 2,
   },
   gridRow: {
     flexDirection: 'row',
-    // No fixed width - let it size naturally based on children (cells with borders)
   },
 });
 
 export default GameGrid;
-

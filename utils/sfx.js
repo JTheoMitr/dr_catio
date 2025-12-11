@@ -5,19 +5,19 @@ import { Audio } from 'expo-av';
 const SOUND_CONFIG = {
   rotate: {
     file: require('../assets/sfx/SFX_Sound Effect_Button_Click-48.mp3'),
-    volume: 0.5,
+    volume: 0.65,
   },
   drop: {
     file: require('../assets/sfx/SFX_Sound Effect_Button_Click-23-drop.mp3'),
-    volume: 0.6,
+    volume: 1.0,
   },
   match: {
-    file: require('../assets/sfx/SFX_Sound Effect_Button_Click-36-match.mp3'),
-    volume: 0.7,
+    file: require('../assets/sfx/ESUISF_Sound_FX_C_Coin Scifi-match.mp3'),
+    volume: 0.65,
   },
   kill: {
-    file: require('../assets/sfx/SFX_Sound Effect_Button_Click-76-mechdestroy.mp3'),
-    volume: 1.0,
+    file: require('../assets/sfx/SCIWeap_Shot_Laser_Zapper_Pistol_2_ROXY_SOUND_Futuristic_Weapons-mechdestroyed.mp3'),
+    volume: 1.3,
   },
   energy: {
     file: require('../assets/sfx/DSGNTonl_Anime_Cartoon_Comedy_13_ROXY_SOUND_ACE-energy.mp3'),
