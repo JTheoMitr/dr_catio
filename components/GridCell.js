@@ -10,6 +10,7 @@ const gunIconAssets = {
   [COLORS.GREEN]: require('../assets/gun-icon-green.png'),
   [COLORS.BLUE]: require('../assets/gun-icon-purple.png'),
   [COLORS.GEAR]: require('../assets/energy-refill-battery.png'),
+  [COLORS.BOMB]: require('../assets/bomb-icon-orange.png'),
 };
 
 const enemyAssets = {
@@ -19,11 +20,37 @@ const enemyAssets = {
   [COLORS.BLUE]: require('../assets/mech-enemy-purple.png'),
 };
 
+// Created bomb tile (white)
+const createdBombAsset = require('../assets/bomb-icon-white.png');
+
 const GridCell = ({ cell, size }) => {
   const cellStyle = { width: size, height: size };
   
   if (!cell) {
     return <View style={[styles.cell, cellStyle]} pointerEvents="none" />;
+  }
+
+
+
+  // 👇 NEW: visual for created bombs (white bomb icon)
+  if (cell.type === 'bomb') {
+    const iconSize = 32;
+    return (
+      <View
+        style={[
+          styles.cell,
+          cellStyle,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+        pointerEvents="none"
+      >
+        <Image
+          source={createdBombAsset}
+          style={{ width: iconSize * 0.9, height: iconSize * 0.9 }}
+          resizeMode="contain"
+        />
+      </View>
+    );
   }
 
   if (cell.type === 'enemy') {

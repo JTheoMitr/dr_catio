@@ -400,13 +400,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#0d0c0f',
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#0d0c0f',
   },
   headerText: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#00fff2'
   },
   gameArea: {
     flex: 1,

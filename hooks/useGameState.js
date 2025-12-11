@@ -6,6 +6,7 @@ import {
   canPlaceGunIcon,
   rotateGunIcon,
   findMatches,
+  findMatchGroups,
   clearMatches,
   applyGravity,
   isGameOver,
@@ -37,6 +38,8 @@ const useGameState = () => {
   const fallTimerRef = useRef(null);
   const gravityTimerRef = useRef(null);
   const gridRef = useRef(grid);
+  const bombTimeoutsRef = useRef({}); // key -> timeoutId
+
   const currentGunIconRef = useRef(currentGunIcon);
   const gunIconPositionRef = useRef(gunIconPosition);
   const particleIdCounter = useRef(0);
@@ -56,6 +59,10 @@ const useGameState = () => {
 
   // Initialize game
   const initializeLevel = useCallback((levelNum) => {
+
+    // Clear any pending bomb explosions
+    Object.values(bombTimeoutsRef.current).forEach(id => clearTimeout(id));
+    bombTimeoutsRef.current = {};
     const newGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
     const mechCount = STARTING_MECH_COUNT + (levelNum - 1) * MECHS_PER_LEVEL;
     const mechs = generateRandomMechs(mechCount);
@@ -141,12 +148,40 @@ const useGameState = () => {
     while (true) {
       const matches = findMatches(currentGrid);
       if (matches.length === 0) break;
+
+      // 🔍 Group matches so we can detect bomb-only groups
+      const groups = findMatchGroups(currentGrid);
+      const pendingBombPlacements = [];
+
+      groups.forEach(group => {
+        // Only consider BOMB-colored groups
+        if (group.color === COLORS.BOMB && group.cells.length >= 4) {
+          if (group.orientation === 'vertical') {
+            // Bomb at bottom of column
+            const bottomCell = group.cells.reduce(
+              (max, c) => (c.row > max.row ? c : max),
+              group.cells[0]
+            );
+            pendingBombPlacements.push({
+              row: bottomCell.row,
+              col: bottomCell.col,
+            });
+          } else if (group.orientation === 'horizontal') {
+            // Bomb in the middle of the row segment
+            const sorted = [...group.cells].sort((a, b) => a.col - b.col);
+            const midIndex = Math.floor(sorted.length / 2);
+            const midCell = sorted[midIndex];
+            pendingBombPlacements.push({
+              row: midCell.row,
+              col: midCell.col,
+            });
+          }
+        }
+      });
       
-      // Track ALL columns where cells will be cleared (important for treats spanning columns)
-      // Also include adjacent columns to catch orphaned treat pieces (other half of a treat)
+      // Track ALL columns where cells will be cleared (important for gravity)
       matches.forEach(({ col }) => {
         affectedColumns.add(col);
-        // Include adjacent columns to catch the other half of treats that span columns
         if (col > 0) affectedColumns.add(col - 1);
         if (col < GRID_WIDTH - 1) affectedColumns.add(col + 1);
       });
@@ -164,16 +199,31 @@ const useGameState = () => {
       const result = clearMatches(currentGrid, matches);
       currentGrid = result.grid;
       totalMechsDestroyed += result.mechCount;
+
+      // 💣 Place bombs AFTER clearing, in their target positions
+      pendingBombPlacements.forEach(({ row, col }) => {
+        // Only place if the cell is empty (it should be, it was part of the match)
+        if (
+          row >= 0 &&
+          row < GRID_HEIGHT &&
+          col >= 0 &&
+          col < GRID_WIDTH &&
+          currentGrid[row][col] === null
+        ) {
+          currentGrid[row][col] = {
+            type: 'bomb',
+            color: COLORS.BOMB,
+          };
+          // Schedule delayed explosion
+          scheduleBombExplosion(row, col);
+        }
+      });
       
       // After clearing, ensure all columns with blocks that can fall are included
-      // This catches orphaned blocks (the other half of a treat)
       for (let col = 0; col < GRID_WIDTH; col++) {
         for (let row = 0; row < GRID_HEIGHT - 1; row++) {
           const cell = currentGrid[row][col];
-          // If there's a block with empty space below it, and this column is adjacent to affected columns
-          // or is already affected, ensure it's processed
           if (cell && cell.type === 'gunIcon' && currentGrid[row + 1][col] === null) {
-            // Check if this column is adjacent to any affected column
             const isAdjacent = Array.from(affectedColumns).some(affectedCol => 
               Math.abs(col - affectedCol) <= 1
             );
@@ -184,13 +234,10 @@ const useGameState = () => {
         }
       }
       
-      // Apply gravity only to affected columns (where cells were cleared)
-      // This will make any blocks above the cleared area fall, including
-      // orphaned blocks (the other half of a treat if only one half was cleared)
-      // The gravity loop continues until no more blocks can fall
+      // Apply gravity only to affected columns
       let moved = true;
       let gravityIterations = 0;
-      const maxGravityIterations = GRID_HEIGHT * 2; // Safety limit
+      const maxGravityIterations = GRID_HEIGHT * 2;
       
       while (moved && gravityIterations < maxGravityIterations) {
         gravityIterations++;
@@ -201,7 +248,6 @@ const useGameState = () => {
         // Check for new matches after gravity (only in affected columns)
         const newMatches = findMatches(currentGrid);
         if (newMatches.length > 0) {
-          // Track columns of new matches
           const newAffectedColumns = new Set();
           newMatches.forEach(({ col }) => {
             if (affectedColumns.has(col)) {
@@ -210,7 +256,6 @@ const useGameState = () => {
           });
           
           if (newAffectedColumns.size > 0) {
-            // Add any new affected columns from cascading matches
             newMatches.forEach(({ col }) => {
               affectedColumns.add(col);
             });
@@ -233,7 +278,7 @@ const useGameState = () => {
     
     setGrid(currentGrid);
     
-    // Add particle effects for ALL matches (even if no cats were fed)
+    // Particle effects
     if (allMatches.length > 0) {
       const newParticles = allMatches.map((match, index) => {
         const key = `${match.row}-${match.col}`;
@@ -246,34 +291,30 @@ const useGameState = () => {
       setParticles(prev => [...prev, ...newParticles]);
     }
     
-    // Calculate score
+    // Scoring (unchanged, except now bombs don't affect mech count)
     if (totalMechsDestroyed > 0) {
-      // Matches with mechs: use existing scoring system
       let turnScore = BASE_SCORE_PER_MECH * totalMechsDestroyed;
       if (totalMechsDestroyed > 1) {
-        turnScore = Math.floor(turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_MECH, totalMechsDestroyed - 1));
+        turnScore = Math.floor(
+          turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_MECH, totalMechsDestroyed - 1)
+        );
       }
       setScore(prev => prev + turnScore);
       console.log(`Mechs destroyed: ${totalMechsDestroyed}, Score: ${turnScore}`);
 
-      // 🔊 mech destroyed sound
       playSfx('kill');
-      // Trigger match animation when mechs are destroyed
       setAnimationTrigger('match');
     } else if (allMatches.length > 0) {
-      // Check if any of the matched cells were GEAR color
       const hadGearMatch = allMatches.some(({ row, col }) => {
         const key = `${row}-${col}`;
         const color = matchColors.get(key);
         return color === COLORS.GEAR;
       });
     
-      // Base score for non-mech matches (you can tweak this if gear should be worth more)
       setScore(prev => prev + 25);
     
       if (hadGearMatch) {
         console.log('Gear match! Meter reset + 25 points');
-        // Bump counter to tell the mech meter UI to restart
         setEnergyUIResetCounter(prev => prev + 1);
         playSfx('energy');
       } else {
@@ -282,21 +323,83 @@ const useGameState = () => {
       }
     }
     
-    // Check level complete
+    // Level complete
     if (isLevelComplete(currentGrid)) {
       console.log('Level complete!');
       setGameState(GAME_STATES.LEVEL_COMPLETE);
       setAnimationTrigger('win');
     }
     
-    // Check game over
+    // Board stack game over (normal)
     if (isGameOver(currentGrid)) {
       console.log('Game over!');
       setGameState(GAME_STATES.GAME_OVER);
       setAnimationTrigger('lose');
-      setGameOverReason('stack');  // 👈 standard “board filled” loss
+      setGameOverReason('stack');
     }
   }, []);
+
+    // 💣 Explode a bomb after its delay
+  const explodeBombAt = useCallback(
+    (row, col, key) => {
+      const currentGrid = gridRef.current;
+
+      // If bomb is no longer there, abort
+      if (
+        !currentGrid[row] ||
+        !currentGrid[row][col] ||
+        currentGrid[row][col].type !== 'bomb'
+      ) {
+        if (key && bombTimeoutsRef.current[key]) {
+          delete bombTimeoutsRef.current[key];
+        }
+        return;
+      }
+
+      let newGrid = currentGrid.map(r => [...r]);
+      const affectedColumns = new Set();
+
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const r = row + dr;
+          const c = col + dc;
+          if (r < 0 || r >= GRID_HEIGHT || c < 0 || c >= GRID_WIDTH) continue;
+
+          const cell = newGrid[r][c];
+          if (cell && cell.type !== 'enemy') {
+            // Destroy everything except mech enemies
+            newGrid[r][c] = null;
+            affectedColumns.add(c);
+          }
+        }
+      }
+
+      setGrid(newGrid);
+
+      // Let normal cascade logic handle gravity + new matches
+      checkMatches(newGrid);
+
+      if (key && bombTimeoutsRef.current[key]) {
+        delete bombTimeoutsRef.current[key];
+      }
+    },
+    [checkMatches]
+  );
+
+  // Schedule a bomb explosion 1.5s after creation
+  const scheduleBombExplosion = useCallback(
+    (row, col) => {
+      const key = `${row}-${col}-${Date.now()}`;
+      const timeoutId = setTimeout(() => {
+        explodeBombAt(row, col, key);
+      }, 1500);
+
+      bombTimeoutsRef.current[key] = timeoutId;
+    },
+    [explodeBombAt]
+  );
+
+
 
   // Move gun icon left
   const moveLeft = useCallback(() => {

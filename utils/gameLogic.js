@@ -1,4 +1,4 @@
-import { GRID_WIDTH, GRID_HEIGHT, COLOR_VALUES, MECH_COLOR_VALUES } from '../constants/GameConstants';
+import { GRID_WIDTH, GRID_HEIGHT, COLOR_VALUES, MECH_COLOR_VALUES, COLORS } from '../constants/GameConstants';
 
 // Generate a random color
 export const getRandomColor = () => {
@@ -109,33 +109,45 @@ export const rotateGunIcon = (gunIcon) => {
   };
 };
 
-// Find matches (4 in a row horizontally or vertically)
-export const findMatches = (grid) => {
-  const matches = new Set();
-  
-  // Check horizontal matches
+// Find contiguous groups (4+) of same-colored tiles (horiz/vert)
+// Returns: [{ orientation: 'horizontal' | 'vertical', color, cells: [{row,col}] }]
+export const findMatchGroups = (grid) => {
+  const groups = [];
+
+  // Helper to get color we care about (ignore created bombs)
+  const getCellColor = (cell) => {
+    if (!cell) return null;
+    if (cell.type === 'bomb') return null;   // 👈 bombs do NOT count as matchable tiles
+    return cell.color || null;
+  };
+
+  // Horizontal groups
   for (let row = 0; row < GRID_HEIGHT; row++) {
     let startCol = 0;
     let currentColor = null;
     let count = 0;
-    
+
+    const flush = () => {
+      if (currentColor !== null && count >= 4) {
+        const cells = [];
+        for (let c = startCol; c < startCol + count; c++) {
+          cells.push({ row, col: c });
+        }
+        groups.push({
+          orientation: 'horizontal',
+          color: currentColor,
+          cells,
+        });
+      }
+    };
+
     for (let col = 0; col < GRID_WIDTH; col++) {
-      const cell = grid[row][col];
-      const cellColor = cell ? cell.color : null;
-      
+      const cellColor = getCellColor(grid[row][col]);
+
       if (cellColor === currentColor && currentColor !== null) {
-        // Continue the sequence
         count++;
       } else {
-        // Sequence ended or changed
-        if (count >= 4 && currentColor !== null) {
-          // Found a match - mark all cells in the sequence
-          for (let i = startCol; i < startCol + count; i++) {
-            matches.add(`${row}-${i}`);
-          }
-        }
-        
-        // Start new sequence
+        flush();
         if (cellColor !== null) {
           currentColor = cellColor;
           startCol = col;
@@ -146,38 +158,37 @@ export const findMatches = (grid) => {
         }
       }
     }
-    
-    // Check if there's a match at the end of the row
-    if (count >= 4 && currentColor !== null) {
-      for (let i = startCol; i < startCol + count; i++) {
-        matches.add(`${row}-${i}`);
-      }
-    }
+
+    flush();
   }
-  
-  // Check vertical matches
+
+  // Vertical groups
   for (let col = 0; col < GRID_WIDTH; col++) {
     let startRow = 0;
     let currentColor = null;
     let count = 0;
-    
+
+    const flush = () => {
+      if (currentColor !== null && count >= 4) {
+        const cells = [];
+        for (let r = startRow; r < startRow + count; r++) {
+          cells.push({ row: r, col });
+        }
+        groups.push({
+          orientation: 'vertical',
+          color: currentColor,
+          cells,
+        });
+      }
+    };
+
     for (let row = 0; row < GRID_HEIGHT; row++) {
-      const cell = grid[row][col];
-      const cellColor = cell ? cell.color : null;
-      
+      const cellColor = getCellColor(grid[row][col]);
+
       if (cellColor === currentColor && currentColor !== null) {
-        // Continue the sequence
         count++;
       } else {
-        // Sequence ended or changed
-        if (count >= 4 && currentColor !== null) {
-          // Found a match - mark all cells in the sequence
-          for (let i = startRow; i < startRow + count; i++) {
-            matches.add(`${i}-${col}`);
-          }
-        }
-        
-        // Start new sequence
+        flush();
         if (cellColor !== null) {
           currentColor = cellColor;
           startRow = row;
@@ -188,20 +199,30 @@ export const findMatches = (grid) => {
         }
       }
     }
-    
-    // Check if there's a match at the end of the column
-    if (count >= 4 && currentColor !== null) {
-      for (let i = startRow; i < startRow + count; i++) {
-        matches.add(`${i}-${col}`);
-      }
-    }
+
+    flush();
   }
-  
-  return Array.from(matches).map(key => {
+
+  return groups;
+};
+
+// Rebuild findMatches using groups, so other code can stay the same
+export const findMatches = (grid) => {
+  const groups = findMatchGroups(grid);
+  const matchSet = new Set();
+
+  groups.forEach(group => {
+    group.cells.forEach(({ row, col }) => {
+      matchSet.add(`${row}-${col}`);
+    });
+  });
+
+  return Array.from(matchSet).map(key => {
     const [row, col] = key.split('-').map(Number);
     return { row, col };
   });
 };
+
 
 // Clear matches from grid
 export const clearMatches = (grid, matches) => {
