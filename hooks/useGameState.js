@@ -32,6 +32,8 @@ const useGameState = () => {
 
   const [gameState, setGameState] = useState(GAME_STATES.PLAYING);
   const [particles, setParticles] = useState([]);
+  const [effects, setEffects] = useState([]);
+
   const [animationTrigger, setAnimationTrigger] = useState(null);
   const [energyUIResetCounter, setEnergyUIResetCounter] = useState(0);
   
@@ -43,6 +45,12 @@ const useGameState = () => {
   const currentGunIconRef = useRef(currentGunIcon);
   const gunIconPositionRef = useRef(gunIconPosition);
   const particleIdCounter = useRef(0);
+
+  // effects remover
+  const removeEffect = useCallback((id) => {
+    setEffects(prev => prev.filter(e => e.id !== id));
+  }, []);
+
   
   // Keep refs in sync
   useEffect(() => {
@@ -356,7 +364,7 @@ if (totalMechsDestroyed > 0) {
     }
   }, []);
 
-  const settleGravity = useCallback((gridToSettle, columns) => {
+const settleGravity = useCallback((gridToSettle, columns) => {
   let currentGrid = gridToSettle.map(r => [...r]);
   let moved = true;
   let iterations = 0;
@@ -374,11 +382,32 @@ if (totalMechsDestroyed > 0) {
 
 
     // 💣 Explode a bomb after its delay
-    const explodeBombAt = useCallback((bombRow, bombCol, key) => {
+    const explodeBombAt = useCallback((bombRow, bombCol) => {
+      const bombKey = `${bombRow}-${bombCol}`;
+    
+      // Cancel this bomb's scheduled explosion if it exists
+      if (bombTimeoutsRef.current[bombKey]) {
+        clearTimeout(bombTimeoutsRef.current[bombKey]);
+        delete bombTimeoutsRef.current[bombKey];
+      }
+    
+      // Visual explosion
+      setEffects(prev => [
+        ...prev,
+        {
+          id: `explosion-${bombRow}-${bombCol}-${Date.now()}`,
+          row: bombRow,
+          col: bombCol,
+        }
+      ]);
+    
+      let mechsDestroyed = 0;
+      let gearsDestroyed = 0;
+      const chainBombs = [];
+    
       setGrid(prevGrid => {
         let newGrid = prevGrid.map(r => [...r]);
     
-        // --- clear 3x3 around bomb (except enemies) ---
         for (let r = bombRow - 1; r <= bombRow + 1; r++) {
           for (let c = bombCol - 1; c <= bombCol + 1; c++) {
             if (r < 0 || r >= GRID_HEIGHT || c < 0 || c >= GRID_WIDTH) continue;
@@ -386,51 +415,87 @@ if (totalMechsDestroyed > 0) {
             const cell = newGrid[r][c];
             if (!cell) continue;
     
-            // don't destroy mechs
-            if (cell.type === 'enemy') continue;
+            // 🔁 CHAIN REACTION: detect bombs
+            if (cell.type === 'bomb') {
+              const chainKey = `${r}-${c}`;
+              if (chainKey !== bombKey) {
+                chainBombs.push({ row: r, col: c });
+              }
+            }
+    
+            if (cell.type === 'enemy') {
+              mechsDestroyed += 1;
+            }
+    
+            if (cell.type === 'gunIcon' && cell.color === COLORS.GEAR) {
+              setEnergyUIResetCounter(prev => prev + 1);
+            }
     
             newGrid[r][c] = null;
           }
         }
     
-        // --- settle gravity in impacted columns ---
+        // Gravity settle
         const affectedCols = [];
         for (let c = bombCol - 1; c <= bombCol + 1; c++) {
           if (c >= 0 && c < GRID_WIDTH) affectedCols.push(c);
         }
     
-        newGrid = settleGravity(newGrid, affectedCols);
-    
-        // IMPORTANT: return the settled grid now; we’ll run match checks AFTER state updates
-        return newGrid;
+        return settleGravity(newGrid, affectedCols);
       });
     
-      // After the grid visually updates, run match/cascade logic.
-      // This is key because checkMatches currently only applies gravity after clears.
-      setTimeout(() => {
-        const latest = gridRef.current;
-        checkMatches(latest);
-      }, 0);
+      // 🔁 Trigger chained bombs immediately (next tick to avoid nested setGrid)
+      chainBombs.forEach(({ row, col }) => {
+        setTimeout(() => explodeBombAt(row, col), 0);
+      });
     
-      // cleanup timeout bookkeeping if you do that
-      if (bombTimeoutsRef.current[key]) {
-        delete bombTimeoutsRef.current[key];
+      // Scoring
+      if (mechsDestroyed > 0) {
+        let scoreGain = BASE_SCORE_PER_MECH * mechsDestroyed;
+        if (mechsDestroyed > 1) {
+          scoreGain = Math.floor(
+            scoreGain * Math.pow(MULTIPLIER_PER_ADDITIONAL_MECH, mechsDestroyed - 1)
+          );
+        }
+        setScore(prev => prev + scoreGain);
+        playSfx('kill');
+        setAnimationTrigger('match');
       }
+    
+      // Meter refill
+      if (gearsDestroyed > 0) {
+        setEnergyUIResetCounter(prev => prev + 1);
+        playSfx('energy');
+      }
+    
+      // Cascade resolution
+      setTimeout(() => {
+        checkMatches(gridRef.current);
+      }, 0);
     }, [settleGravity, checkMatches]);
+    
+
     
 
   // Schedule a bomb explosion 2.5s after creation
   const scheduleBombExplosion = useCallback(
     (row, col) => {
-      const key = `${row}-${col}-${Date.now()}`;
+      const key = `${row}-${col}`;
+  
+      // Safety: clear existing timeout if re-used
+      if (bombTimeoutsRef.current[key]) {
+        clearTimeout(bombTimeoutsRef.current[key]);
+      }
+  
       const timeoutId = setTimeout(() => {
-        explodeBombAt(row, col, key);
+        explodeBombAt(row, col);
       }, 2500);
-
+  
       bombTimeoutsRef.current[key] = timeoutId;
     },
     [explodeBombAt]
   );
+  
 
 
 
@@ -615,6 +680,8 @@ if (totalMechsDestroyed > 0) {
     energyUIResetCounter,
     triggerMeterGameOver,
     gameOverReason,
+    effects,
+    removeEffect,
   };
 };
 

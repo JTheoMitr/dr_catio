@@ -44,6 +44,8 @@ const GameScreen = () => {
     energyUIResetCounter,
     triggerMeterGameOver,
     gameOverReason,
+    effects,
+    removeEffect,
   } = useGameState();
 
   const [animationType, setAnimationType] = useState('default');
@@ -200,6 +202,8 @@ const GameScreen = () => {
                 gunIconPosition={gunIconPosition}
                 particles={particles}
                 onRemoveParticle={removeParticle}
+                effects={effects}
+                onRemoveEffect={removeEffect}
               />
             </View>
           </View>

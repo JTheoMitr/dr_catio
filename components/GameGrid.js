@@ -3,6 +3,8 @@ import { View, StyleSheet, Dimensions, Animated, Platform } from 'react-native';
 import { GRID_WIDTH, GRID_HEIGHT } from '../constants/GameConstants';
 import GridCell from './GridCell';
 import ParticleEffect from './ParticleEffect';
+import ExplosionEffect from './ExplosionEffect';
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MARGIN_PERCENT = 0.025;
@@ -17,7 +19,7 @@ const GRID_HEIGHT_PX = CELL_SIZE * GRID_HEIGHT;
 const GRID_WIDTH_WITH_BORDERS = (CELL_SIZE * GRID_WIDTH) + (CELL_BORDER_WIDTH * 2) + 3;
 export const GRID_HEIGHT_WITH_BORDERS = (CELL_SIZE * GRID_HEIGHT) + (CELL_BORDER_WIDTH * 2) + 3;
 
-const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemoveParticle }) => {
+const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemoveParticle, effects, onRemoveEffect }) => {
   // 🔥 Glow animation value (0–1)
   const glowAnim = useRef(new Animated.Value(0)).current;
 
@@ -108,6 +110,20 @@ const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemovePa
             </View>
           ))}
         </Animated.View>
+
+         {/*Explosion Effects - positioned relative to grid */}
+         {effects && effects.map(effect => (
+            <ExplosionEffect
+              key={effect.id}
+              x={effect.col * CELL_SIZE + CELL_SIZE / 2}
+              y={effect.row * CELL_SIZE + CELL_SIZE / 2}
+              sizePx={CELL_SIZE * 3}
+              source={require('../assets/effects/xplosion_spritesheet.png')}
+              fps={24}
+              onComplete={() => onRemoveEffect?.(effect.id)}
+            />
+          ))}
+
 
         {/* Particle Effects - positioned relative to grid */}
         {particles && particles.map(particle => (
