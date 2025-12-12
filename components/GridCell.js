@@ -1,18 +1,18 @@
-import React from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Image, Animated } from 'react-native';
 import { COLORS } from '../constants/GameConstants';
 
-// Import your pixel art assets
-// Update these paths to match your actual asset filenames
+// Gun icon assets (falling pieces)
 const gunIconAssets = {
   [COLORS.RED]: require('../assets/gun-icon-red.png'),
   [COLORS.YELLOW]: require('../assets/gun-icon-yellow.png'),
   [COLORS.GREEN]: require('../assets/gun-icon-green.png'),
   [COLORS.BLUE]: require('../assets/gun-icon-purple.png'),
   [COLORS.GEAR]: require('../assets/energy-refill-battery.png'),
-  [COLORS.BOMB]: require('../assets/bomb-icon-orange.png'),
+  [COLORS.BOMB]: require('../assets/bomb-icon-orange.png'), // ⬅️ bomb color piece
 };
 
+// Enemy assets
 const enemyAssets = {
   [COLORS.RED]: require('../assets/mech-enemy-red.png'),
   [COLORS.YELLOW]: require('../assets/mech-enemy-yellow.png'),
@@ -20,21 +20,93 @@ const enemyAssets = {
   [COLORS.BLUE]: require('../assets/mech-enemy-purple.png'),
 };
 
-// Created bomb tile (white)
-const createdBombAsset = require('../assets/bomb-icon-white.png');
+// Bomb visuals for created bombs
+const BOMB_ORANGE = require('../assets/bomb-icon-orange.png');
+const BOMB_WHITE = require('../assets/bomb-icon-white.png');
+
+/**
+ * A flashing bomb that cross-fades between orange and white
+ * while the bomb is "arming" (during your 2.5s delay).
+ */
+const FlashingBomb = ({ size }) => {
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 250, // speed of flashing
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    loop.start();
+
+    return () => {
+      loop.stop();
+    };
+  }, [anim]);
+
+  const orangeOpacity = anim; // 0 → 1
+  const whiteOpacity = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0], // opposite of orange
+  });
+
+  const iconSize = size * 0.9;
+
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      pointerEvents="none"
+    >
+      {/* Orange layer */}
+      <Animated.Image
+        source={BOMB_ORANGE}
+        style={{
+          position: 'absolute',
+          width: iconSize,
+          height: iconSize,
+          opacity: orangeOpacity,
+        }}
+        resizeMode="contain"
+      />
+      {/* White layer */}
+      <Animated.Image
+        source={BOMB_WHITE}
+        style={{
+          position: 'absolute',
+          width: iconSize,
+          height: iconSize,
+          opacity: whiteOpacity,
+        }}
+        resizeMode="contain"
+      />
+    </View>
+  );
+};
 
 const GridCell = ({ cell, size }) => {
   const cellStyle = { width: size, height: size };
-  
+
   if (!cell) {
     return <View style={[styles.cell, cellStyle]} pointerEvents="none" />;
   }
 
-
-
-  // 👇 NEW: visual for created bombs (white bomb icon)
+  // 1) Created bomb: special flashing render
   if (cell.type === 'bomb') {
-    const iconSize = 32;
     return (
       <View
         style={[
@@ -44,65 +116,88 @@ const GridCell = ({ cell, size }) => {
         ]}
         pointerEvents="none"
       >
-        <Image
-          source={createdBombAsset}
-          style={{ width: iconSize * 0.9, height: iconSize * 0.9 }}
-          resizeMode="contain"
-        />
+        <FlashingBomb size={size} />
       </View>
     );
   }
 
+  // 2) Enemy mech
   if (cell.type === 'enemy') {
-    // Enemy mech: use pixel art image
     const enemyImage = enemyAssets[cell.color];
     return (
-      <View style={[styles.cell, cellStyle, { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="none">
+      <View
+        style={[
+          styles.cell,
+          cellStyle,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+        pointerEvents="none"
+      >
         {enemyImage ? (
-          <Image 
-            source={enemyImage} 
-            style={{ width: size * 0.85, height: size * 0.85 }} 
+          <Image
+            source={enemyImage}
+            style={{ width: size * 0.85, height: size * 0.85 }}
             resizeMode="contain"
           />
         ) : (
-          // Fallback to colored circle if image not found
-          <View style={[styles.enemy, { width: size * 0.7, height: size * 0.7, borderRadius: size * 0.35, backgroundColor: '#999' }]} />
-        )}
-      </View>
-    );
-  } else {
-    // Gun icon: use pixel art image at native size (32x32) to avoid blur
-    const gunIconImage = gunIconAssets[cell.color];
-    const iconSize = 32; // Native size of the icons
-    return (
-      <View style={[styles.cell, cellStyle, { justifyContent: 'center', alignItems: 'center' }]} pointerEvents="none">
-        {gunIconImage ? (
-          <Image 
-            source={gunIconImage} 
-            style={{ width: iconSize * 0.85, height: iconSize * 0.85 }} 
-            resizeMode="contain"
+          <View
+            style={[
+              styles.enemy,
+              {
+                width: size * 0.7,
+                height: size * 0.7,
+                borderRadius: size * 0.35,
+                backgroundColor: '#999',
+              },
+            ]}
           />
-        ) : (
-          // Fallback to colored block if image not found
-          <View style={[styles.gunIcon, { width: iconSize, height: iconSize, backgroundColor: '#999' }]} />
         )}
       </View>
     );
   }
+
+  // 3) Default gun icon (including bomb-color falling tiles)
+  const gunIconImage = gunIconAssets[cell.color];
+  const iconSize = 32; // native icon size
+
+  return (
+    <View
+      style={[
+        styles.cell,
+        cellStyle,
+        { justifyContent: 'center', alignItems: 'center' },
+      ]}
+      pointerEvents="none"
+    >
+      {gunIconImage ? (
+        <Image
+          source={gunIconImage}
+          style={{ width: iconSize * 0.85, height: iconSize * 0.85 }}
+          resizeMode="contain"
+        />
+      ) : (
+        <View
+          style={[
+            styles.gunIcon,
+            { width: iconSize, height: iconSize, backgroundColor: '#999' },
+          ]}
+        />
+      )}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   cell: {
     borderWidth: 0.5,
-    borderColor: '#003838', // dark neon grid lines for better visibility
+    borderColor: '#003838', // dark neon grid lines
   },
   gunIcon: {
-    // Gun icon block
+    // fallback block
   },
   enemy: {
-    // Enemy mech circle
+    // fallback enemy
   },
 });
 
 export default GridCell;
-

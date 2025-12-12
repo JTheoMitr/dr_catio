@@ -292,36 +292,53 @@ const useGameState = () => {
     }
     
     // Scoring (unchanged, except now bombs don't affect mech count)
-    if (totalMechsDestroyed > 0) {
-      let turnScore = BASE_SCORE_PER_MECH * totalMechsDestroyed;
-      if (totalMechsDestroyed > 1) {
-        turnScore = Math.floor(
-          turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_MECH, totalMechsDestroyed - 1)
-        );
-      }
-      setScore(prev => prev + turnScore);
-      console.log(`Mechs destroyed: ${totalMechsDestroyed}, Score: ${turnScore}`);
+    // --- Scoring & meter logic ---
 
-      playSfx('kill');
-      setAnimationTrigger('match');
-    } else if (allMatches.length > 0) {
-      const hadGearMatch = allMatches.some(({ row, col }) => {
-        const key = `${row}-${col}`;
-        const color = matchColors.get(key);
-        return color === COLORS.GEAR;
-      });
-    
-      setScore(prev => prev + 25);
-    
-      if (hadGearMatch) {
-        console.log('Gear match! Meter reset + 25 points');
-        setEnergyUIResetCounter(prev => prev + 1);
-        playSfx('energy');
-      } else {
-        console.log('Match cleared (no mechs, no gear), Score: 25');
-        playSfx('match');
-      }
-    }
+// Did any of the cleared cells have GEAR color?
+const hadGearMatch = allMatches.some(({ row, col }) => {
+  const key = `${row}-${col}`;
+  const color = matchColors.get(key);
+  return color === COLORS.GEAR;
+});
+
+if (totalMechsDestroyed > 0) {
+  // Matches with mechs: use existing scoring system
+  let turnScore = BASE_SCORE_PER_MECH * totalMechsDestroyed;
+  if (totalMechsDestroyed > 1) {
+    turnScore = Math.floor(
+      turnScore * Math.pow(MULTIPLIER_PER_ADDITIONAL_MECH, totalMechsDestroyed - 1)
+    );
+  }
+
+  setScore(prev => prev + turnScore);
+  console.log(`Mechs destroyed: ${totalMechsDestroyed}, Score: ${turnScore}`);
+
+  // 🔊 mech destroyed sound
+  playSfx('kill');
+  // Trigger match animation when mechs are destroyed
+  setAnimationTrigger('match');
+
+  // ✅ NEW: if ANY of the matched cells were GEAR, refill meter as well
+  if (hadGearMatch) {
+    console.log('Gear match during mech kill! Meter reset.');
+    setEnergyUIResetCounter(prev => prev + 1);
+    // Optional: play energy sfx in addition to kill sfx
+    playSfx('energy');
+  }
+} else if (allMatches.length > 0) {
+  // No mechs destroyed this cascade → base score for normal matches
+  setScore(prev => prev + 25);
+
+  if (hadGearMatch) {
+    console.log('Gear match! Meter reset + 25 points');
+    setEnergyUIResetCounter(prev => prev + 1);
+    playSfx('energy');
+  } else {
+    console.log('Match cleared (no mechs, no gear), Score: 25');
+    playSfx('match');
+  }
+}
+
     
     // Level complete
     if (isLevelComplete(currentGrid)) {
@@ -339,60 +356,76 @@ const useGameState = () => {
     }
   }, []);
 
+  const settleGravity = useCallback((gridToSettle, columns) => {
+  let currentGrid = gridToSettle.map(r => [...r]);
+  let moved = true;
+  let iterations = 0;
+  const maxIterations = GRID_HEIGHT * 2;
+
+  while (moved && iterations < maxIterations) {
+    iterations++;
+    const result = applyGravity(currentGrid, columns);
+    currentGrid = result.grid;
+    moved = result.moved;
+  }
+
+  return currentGrid;
+  }, []);
+
+
     // 💣 Explode a bomb after its delay
-  const explodeBombAt = useCallback(
-    (row, col, key) => {
-      const currentGrid = gridRef.current;
-
-      // If bomb is no longer there, abort
-      if (
-        !currentGrid[row] ||
-        !currentGrid[row][col] ||
-        currentGrid[row][col].type !== 'bomb'
-      ) {
-        if (key && bombTimeoutsRef.current[key]) {
-          delete bombTimeoutsRef.current[key];
-        }
-        return;
-      }
-
-      let newGrid = currentGrid.map(r => [...r]);
-      const affectedColumns = new Set();
-
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          const r = row + dr;
-          const c = col + dc;
-          if (r < 0 || r >= GRID_HEIGHT || c < 0 || c >= GRID_WIDTH) continue;
-
-          const cell = newGrid[r][c];
-          if (cell && cell.type !== 'enemy') {
-            // Destroy everything except mech enemies
+    const explodeBombAt = useCallback((bombRow, bombCol, key) => {
+      setGrid(prevGrid => {
+        let newGrid = prevGrid.map(r => [...r]);
+    
+        // --- clear 3x3 around bomb (except enemies) ---
+        for (let r = bombRow - 1; r <= bombRow + 1; r++) {
+          for (let c = bombCol - 1; c <= bombCol + 1; c++) {
+            if (r < 0 || r >= GRID_HEIGHT || c < 0 || c >= GRID_WIDTH) continue;
+    
+            const cell = newGrid[r][c];
+            if (!cell) continue;
+    
+            // don't destroy mechs
+            if (cell.type === 'enemy') continue;
+    
             newGrid[r][c] = null;
-            affectedColumns.add(c);
           }
         }
-      }
-
-      setGrid(newGrid);
-
-      // Let normal cascade logic handle gravity + new matches
-      checkMatches(newGrid);
-
-      if (key && bombTimeoutsRef.current[key]) {
+    
+        // --- settle gravity in impacted columns ---
+        const affectedCols = [];
+        for (let c = bombCol - 1; c <= bombCol + 1; c++) {
+          if (c >= 0 && c < GRID_WIDTH) affectedCols.push(c);
+        }
+    
+        newGrid = settleGravity(newGrid, affectedCols);
+    
+        // IMPORTANT: return the settled grid now; we’ll run match checks AFTER state updates
+        return newGrid;
+      });
+    
+      // After the grid visually updates, run match/cascade logic.
+      // This is key because checkMatches currently only applies gravity after clears.
+      setTimeout(() => {
+        const latest = gridRef.current;
+        checkMatches(latest);
+      }, 0);
+    
+      // cleanup timeout bookkeeping if you do that
+      if (bombTimeoutsRef.current[key]) {
         delete bombTimeoutsRef.current[key];
       }
-    },
-    [checkMatches]
-  );
+    }, [settleGravity, checkMatches]);
+    
 
-  // Schedule a bomb explosion 1.5s after creation
+  // Schedule a bomb explosion 2.5s after creation
   const scheduleBombExplosion = useCallback(
     (row, col) => {
       const key = `${row}-${col}-${Date.now()}`;
       const timeoutId = setTimeout(() => {
         explodeBombAt(row, col, key);
-      }, 1500);
+      }, 2500);
 
       bombTimeoutsRef.current[key] = timeoutId;
     },
