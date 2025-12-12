@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Image, Animated } from 'react-native';
 import { COLORS } from '../constants/GameConstants';
 
+
+
 // Gun icon assets (falling pieces)
 const gunIconAssets = {
   [COLORS.RED]: require('../assets/gun-icon-red.png'),
@@ -98,7 +100,7 @@ const FlashingBomb = ({ size }) => {
   );
 };
 
-const GridCell = ({ cell, size }) => {
+const GridCell = ({ cell, size, glowOpacity }) => {
   const cellStyle = { width: size, height: size };
 
   if (!cell) {
@@ -170,11 +172,15 @@ const GridCell = ({ cell, size }) => {
       pointerEvents="none"
     >
       {gunIconImage ? (
-        <Image
-          source={gunIconImage}
-          style={{ width: iconSize * 0.85, height: iconSize * 0.85 }}
-          resizeMode="contain"
-        />
+        <Animated.Image
+        source={gunIconImage}
+        style={{
+          width: iconSize * 0.85,
+          height: iconSize * 0.85,
+          opacity: glowOpacity ?? 1,
+        }}
+        resizeMode="contain"
+      />
       ) : (
         <View
           style={[

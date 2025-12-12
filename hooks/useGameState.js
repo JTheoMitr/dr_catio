@@ -96,11 +96,15 @@ const useGameState = () => {
     
     const newGrid = currentGrid.map(row => [...row]);
     const gunIconPositions = getGunIconPositions(gunIcon, position.row, position.col);
+
+    // ✅ NEW: stable ID shared by both halves of this 2-block piece
+    const pairId = `pair-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     
     gunIconPositions.forEach(({ row, col, isTop }) => {
       newGrid[row][col] = {
         type: 'gunIcon',
         color: isTop ? gunIcon.top : gunIcon.bottom,
+        pairId,
       };
     });
     
@@ -226,6 +230,34 @@ const useGameState = () => {
           scheduleBombExplosion(row, col);
         }
       });
+      // ✅ Ensure gravity processes columns impacted by bomb creation + orphan halves
+      pendingBombPlacements.forEach(({ col }) => {
+        affectedColumns.add(col);
+        if (col > 0) affectedColumns.add(col - 1);
+        if (col < GRID_WIDTH - 1) affectedColumns.add(col + 1);
+      });
+
+      // ✅ Scan for orphan halves (gunIcon blocks with NO adjacent gunIcon)
+      // These happen when a bomb-match clears only the bomb-colored half of a 2-block piece.
+      for (let r = 0; r < GRID_HEIGHT; r++) {
+        for (let c = 0; c < GRID_WIDTH; c++) {
+          const cell = currentGrid[r][c];
+          if (!cell || cell.type !== 'gunIcon') continue;
+
+          const hasGunNeighbor =
+            (c > 0 && currentGrid[r][c - 1]?.type === 'gunIcon') ||
+            (c < GRID_WIDTH - 1 && currentGrid[r][c + 1]?.type === 'gunIcon') ||
+            (r > 0 && currentGrid[r - 1][c]?.type === 'gunIcon') ||
+            (r < GRID_HEIGHT - 1 && currentGrid[r + 1][c]?.type === 'gunIcon');
+
+          if (!hasGunNeighbor) {
+            affectedColumns.add(c);
+            if (c > 0) affectedColumns.add(c - 1);
+            if (c < GRID_WIDTH - 1) affectedColumns.add(c + 1);
+          }
+        }
+      }
+
       
       // After clearing, ensure all columns with blocks that can fall are included
       for (let col = 0; col < GRID_WIDTH; col++) {

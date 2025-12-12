@@ -22,6 +22,27 @@ export const GRID_HEIGHT_WITH_BORDERS = (CELL_SIZE * GRID_HEIGHT) + (CELL_BORDER
 const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemoveParticle, effects, onRemoveEffect }) => {
   // 🔥 Glow animation value (0–1)
   const glowAnim = useRef(new Animated.Value(0)).current;
+  const glowOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowOpacity, {
+          toValue: 0.65,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowOpacity, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    loop.start();
+    return () => loop.stop();
+  }, [glowOpacity]);
 
   useEffect(() => {
     // Loop a gentle in/out pulse
@@ -104,6 +125,7 @@ const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemovePa
                     key={`${rowIndex}-${colIndex}`}
                     cell={cell || gunIconCell}
                     size={CELL_SIZE}
+                    glowOpacity={glowOpacity}
                   />
                 );
               })}

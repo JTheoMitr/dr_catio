@@ -8,7 +8,7 @@ const SOUND_CONFIG = {
     volume: 0.65,
   },
   drop: {
-    file: require('../assets/sfx/SFX_Sound Effect_Button_Click-23-drop.mp3'),
+    file: require('../assets/sfx/block_drop.mp3'),
     volume: 1.0,
   },
   match: {
@@ -16,7 +16,7 @@ const SOUND_CONFIG = {
     volume: 0.65,
   },
   kill: {
-    file: require('../assets/sfx/SCIWeap_Shot_Laser_Zapper_Pistol_2_ROXY_SOUND_Futuristic_Weapons-mechdestroyed.mp3'),
+    file: require('../assets/sfx/mech_laser_fire_1.mp3'),
     volume: 1.3,
   },
   energy: {

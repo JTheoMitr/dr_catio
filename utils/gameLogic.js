@@ -244,26 +244,39 @@ export const clearMatches = (grid, matches) => {
 const isPartOfGunIcon = (grid, row, col) => {
   const cell = grid[row][col];
   if (!cell || cell.type !== 'gunIcon') return false;
-  
-  // Check for adjacent gun icon blocks (horizontal or vertical)
+
+  // ✅ NEW: if it doesn't have a pairId, treat it as an orphan forever (no auto-pairing)
+  if (!cell.pairId) return false;
+
+  const samePair = (r, c) => {
+    const other = grid[r]?.[c];
+    return (
+      other &&
+      other.type === 'gunIcon' &&
+      other.pairId &&
+      other.pairId === cell.pairId
+    );
+  };
+
   // Horizontal: check left and right
-  if (col > 0 && grid[row][col - 1] && grid[row][col - 1].type === 'gunIcon') {
+  if (col > 0 && samePair(row, col - 1)) {
     return { type: 'horizontal', partnerRow: row, partnerCol: col - 1 };
   }
-  if (col < GRID_WIDTH - 1 && grid[row][col + 1] && grid[row][col + 1].type === 'gunIcon') {
+  if (col < GRID_WIDTH - 1 && samePair(row, col + 1)) {
     return { type: 'horizontal', partnerRow: row, partnerCol: col + 1 };
   }
-  
+
   // Vertical: check top and bottom
-  if (row > 0 && grid[row - 1][col] && grid[row - 1][col].type === 'gunIcon') {
+  if (row > 0 && samePair(row - 1, col)) {
     return { type: 'vertical', partnerRow: row - 1, partnerCol: col };
   }
-  if (row < GRID_HEIGHT - 1 && grid[row + 1][col] && grid[row + 1][col].type === 'gunIcon') {
+  if (row < GRID_HEIGHT - 1 && samePair(row + 1, col)) {
     return { type: 'vertical', partnerRow: row + 1, partnerCol: col };
   }
-  
+
   return false;
 };
+
 
 // Check if both blocks of a gun icon can fall together
 const canGunIconFall = (grid, row1, col1, row2, col2, gunIconType) => {
