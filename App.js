@@ -10,6 +10,8 @@ import LevelBlockMeter from './components/LevelBlockMeter';
 import RotatingOverlaySprite from './components/RotatingOverlaySprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
+import PilotSelectionScreen from './components/PilotSelectionScreen';
+
 import { Audio } from 'expo-av';
 
 // NEW:
@@ -257,6 +259,8 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('menu');
   const [selectedCampaign, setSelectedCampaign] = useState(1);
   const [selectedStage, setSelectedStage] = useState(1);
+  const [selectedPilot, setSelectedPilot] = useState(1);
+
 
   // 🔊 Menu / meta-screen music
   const menuBgmRef = React.useRef(null);
@@ -329,7 +333,7 @@ export default function App() {
   
 
   const handleStartFromMenu = () => {
-    setCurrentScreen('campaignSelect');
+    setCurrentScreen('pilotSelect');
   };
 
   const handleSelectCampaign = (campaignId) => {
@@ -352,6 +356,23 @@ export default function App() {
       </SafeAreaView>
     );
   }
+
+  // Pilot select
+if (currentScreen === 'pilotSelect') {
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="auto" />
+      <PilotSelectionScreen
+        onBack={() => setCurrentScreen('menu')}
+        onSelectPilot={(pilotId) => {
+          setSelectedPilot(pilotId);
+          setCurrentScreen('campaignSelect');
+        }}
+      />
+    </SafeAreaView>
+  );
+}
+
 
   // Campaign select
   if (currentScreen === 'campaignSelect') {
