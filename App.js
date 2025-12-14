@@ -11,6 +11,7 @@ import RotatingOverlaySprite from './components/RotatingOverlaySprite';
 import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
 import PilotSelectionScreen from './components/PilotSelectionScreen';
+import { useFonts } from 'expo-font';
 
 import { Audio } from 'expo-av';
 
@@ -330,7 +331,12 @@ export default function App() {
     };
   }, []);
 
-  
+  const [fontsLoaded] = useFonts({
+    Sddystopian: require('./assets/fonts/Sddystopiandemo-GO7xa.otf'),
+  });
+
+  if (!fontsLoaded) return null; // or splash screen
+
 
   const handleStartFromMenu = () => {
     setCurrentScreen('pilotSelect');
@@ -380,7 +386,7 @@ if (currentScreen === 'pilotSelect') {
       <SafeAreaView style={styles.container}>
         <StatusBar style="auto" />
         <CampaignSelectScreen
-          onBack={() => setCurrentScreen('menu')}
+          onBack={() => setCurrentScreen('pilotSelect')}
           onSelectCampaign={handleSelectCampaign}
         />
       </SafeAreaView>

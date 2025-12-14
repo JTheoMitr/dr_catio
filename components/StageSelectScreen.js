@@ -9,6 +9,7 @@ import {
   Animated,
 } from 'react-native';
 import { Audio } from 'expo-av';
+import MenuBackground from './MenuBackground';
 
 const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
   // SFX for button click
@@ -96,10 +97,7 @@ const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
   };
 
   return (
-    <ImageBackground
-      source={require('../assets/backgrounds/stage_select_bg.png')}
-      style={styles.background}
-      resizeMode="cover"
+    <MenuBackground
     >
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         {/* Header */}
@@ -155,7 +153,7 @@ const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
           </View>
         </View>
       </Animated.View>
-    </ImageBackground>
+    </MenuBackground>
   );
 };
 

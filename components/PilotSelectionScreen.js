@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Image, ScrollView, Dimensions, Animated } from 'react-native';
-import * as Font from 'expo-font';
+import GameText from './GameText';
+import GameButton from './GameButton';
 
 
 
@@ -135,14 +136,6 @@ useEffect(() => {
   return () => fadeAnimation.stop();
 }, [fadeAnim]);
 
-const [fontsLoaded, setFontsLoaded] = useState(false);
-useEffect(() => {
-    Font.loadAsync({
-        Sddystopian: require('../assets/fonts/Sddystopiandemo-GO7xa.otf'),
-    }).then(() => setFontsLoaded(true));
-    }, []);
-
-    if (!fontsLoaded) return null;
 
 return (
   <View style={styles.container}>
@@ -164,7 +157,7 @@ return (
 
     {/* Everything else stays the same */}
     <View style={styles.overlay}>
-      <Text style={[styles.baseText, styles.title]}>Select Your Pilot</Text>
+      <GameText style={[styles.title]}>Select Your Pilot</GameText>
 
       <View style={styles.list}>
         {pilots.map(p => (
@@ -179,29 +172,34 @@ return (
             </View>
 
             <View style={styles.info}>
-              <Text style={[styles.baseText, styles.pilotTitle]}>{p.title}</Text>
+              <GameText style={[styles.pilotTitle]}>{p.title}</GameText>
               <Text style={styles.line}>
-                <Text style={[styles.baseText, styles.label]}>Name: </Text>
-                <Text style={[styles.baseText, styles.value]}>{p.name}</Text>
+                <GameText style={[styles.label]}>Name: </GameText>
+                <GameText style={[styles.value]}>{p.name}</GameText>
               </Text>
-              <Text style={styles.line}>
-                <Text style={[styles.baseText, styles.label]}>Age: </Text>
-                <Text style={[styles.baseText, styles.value]}>{p.age}</Text>
-              </Text>
+              {/* <Text style={styles.line}>
+                <GameText style={[styles.label]}>Age: </GameText>
+                <GameText style={[styles.value]}>{p.age}</GameText>
+              </Text> */}
 
-              <Text style={[styles.baseText, styles.label, { marginTop: 6 }]}>Background:</Text>
-              <Text style={[styles.baseText, styles.paragraph]}>{p.background}</Text>
+              <GameText style={[styles.label, { marginTop: 6 }]}>Background:</GameText>
+              <GameText style={[styles.paragraph]}>{p.background}</GameText>
 
-              <Text style={[styles.baseText, styles.label, { marginTop: 6 }]}>Power:</Text>
-              <Text style={[styles.baseText, styles.power]}>{p.power}</Text>
+              <GameText style={[styles.label, { marginTop: 6 }]}>Power:</GameText>
+              <GameText style={[styles.power]}>{p.power}</GameText>
             </View>
           </TouchableOpacity>
         ))}
       </View>
 
-      <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-        <Text style={[styles.baseText, styles.backText]}>Back</Text>
-      </TouchableOpacity>
+      <GameButton
+        title="Back"
+        variant="ghost"
+        small
+        onPress={onBack}
+        style={{ alignSelf: 'center', marginTop: 14 }}
+        />
+
     </View>
   </View>
 );
@@ -310,16 +308,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  baseText: {
-    fontFamily: 'Sddystopian',
-    color: '#E7FEFF',
-  },
   title: {
-    fontFamily: 'Sddystopian', // optional if you spread baseText
     fontSize: 26,
     fontWeight: '900',
-    color: '#E7FEFF',
     marginBottom: 14,
+    alignSelf: "center",
     textShadowColor: 'rgba(0,255,255,0.35)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,

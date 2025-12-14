@@ -8,21 +8,18 @@ import {
   ImageBackground,
 } from 'react-native';
 import MenuBackground from './MenuBackground';
+import GameText from './GameText';
+import GameButton from './GameButton';
 
 const CampaignSelectScreen = ({ onBack, onSelectCampaign }) => {
   return (
     <MenuBackground
     >
       <View style={styles.overlay}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>{'<'} Menu</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Select Campaign</Text>
-          <View style={{ width: 80 }} />
-        </View>
+      
 
         <View style={styles.centerContent}>
+        <GameText style={[styles.title]}>Select Campaign</GameText>
           {/* Campaign 1 - active */}
           <TouchableOpacity
             style={[styles.campaignButton, styles.campaignActive]}
@@ -43,6 +40,13 @@ const CampaignSelectScreen = ({ onBack, onSelectCampaign }) => {
             <Text style={styles.campaignTitle}>Campaign 3</Text>
             <Text style={styles.campaignSubtitle}>Coming Soon</Text>
           </View>
+          <GameButton
+        title="Back"
+        variant="ghost"
+        small
+        onPress={onBack}
+        style={{ alignSelf: 'center', marginTop: 14 }}
+        />
         </View>
       </View>
     </MenuBackground>
@@ -60,7 +64,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   headerRow: {
-    flexDirection: 'row',
+    flexDirection: 'center',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 24,
@@ -79,6 +83,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 22,
     fontWeight: '700',
+    alignSelf: 'center',
   },
   centerContent: {
     flex: 1,

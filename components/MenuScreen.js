@@ -1,21 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, Animated } from 'react-native';
-import * as Font from 'expo-font';
+import GameText from '../components/GameText';
+import GameButton from '../components/GameButton';
+
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const MenuScreen = ({ onStartGame }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  // Load custom font
-  useEffect(() => {
-    Font.loadAsync({
-      'Sddystopian': require('../assets/fonts/Sddystopiandemo-GO7xa.otf'),
-    }).then(() => {
-      setFontsLoaded(true);
-    });
-  }, []);
+
 
   // Animate background fade between images
   useEffect(() => {
@@ -38,9 +32,7 @@ const MenuScreen = ({ onStartGame }) => {
     return () => fadeAnimation.stop();
   }, [fadeAnim]);
 
-  if (!fontsLoaded) {
-    return null; // Or a loading screen
-  }
+
 
   return (
     <View style={styles.container}>
@@ -69,16 +61,20 @@ const MenuScreen = ({ onStartGame }) => {
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.title}>Mech Management Puzzler Mayhem</Text>
+        <GameText style={styles.title}>Mech Management Puzzler Mayhem</GameText>
         
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={onStartGame}>
-            <Text style={styles.buttonText}>START</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.button, styles.buttonInactive]} disabled>
-            <Text style={[styles.buttonText, styles.buttonTextInactive]}>OPTIONS</Text>
-          </TouchableOpacity>
+            <GameButton
+                title="START"
+                variant="neon"      // keep your blue menu vibe OR switch to "neon"
+                onPress={onStartGame}
+            />
+
+            <GameButton
+                title="OPTIONS"
+                variant="neon"
+                disabled
+            />
         </View>
       </View>
     </View>
