@@ -28,7 +28,7 @@ const GameGrid = ({ grid, currentGunIcon, gunIconPosition, particles, onRemovePa
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(glowOpacity, {
-          toValue: 0.65,
+          toValue: 0.55,
           duration: 1200,
           useNativeDriver: true,
         }),

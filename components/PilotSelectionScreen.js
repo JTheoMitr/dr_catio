@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Image, ScrollView, Dimensions, Animated } from 'react-native';
+import * as Font from 'expo-font';
+
+
 
 const BG_1 = require('../assets/backgrounds/menu_bgnd_1.png');
 const BG_2 = require('../assets/backgrounds/menu_bgnd_2.png');
@@ -19,12 +22,14 @@ const HeadshotSprite = ({
     source,
     frames,
     size = 74,
-    frameWidth = 32,
-    frameHeight = 32,
+    frameWidth = 64,
+    frameHeight = 64,
     fps = 2,
   }) => {
     const frameIndexRef = useRef(0);
     const [frameIndex, setFrameIndex] = useState(0);
+
+
   
     useEffect(() => {
       const interval = setInterval(() => {
@@ -79,7 +84,7 @@ export default function PilotSelectionScreen({ onBack, onSelectPilot }) {
         title: 'Pilot 1',
         name: 'Gerdy',
         age: '65',
-        background: 'Drafted at 17 in the Great War of 2039, Gerdy rose to General of the UCMA through grit and strategy. Now retired, he fights as a mercenary, a master of explosives and battlefield tactics.',
+        background: 'Mercenary master of Tactics and Explosives', //'Drafted at 17 in the Great War of 2039, Gerdy rose to General of the UCMA through grit and strategy. Now retired, he fights as a mercenary, a master of explosives and battlefield tactics.',
         power: 'Increased chance of bomb tiles',
         headshot: PILOT_1,
         frames: 4,
@@ -89,17 +94,17 @@ export default function PilotSelectionScreen({ onBack, onSelectPilot }) {
         title: 'Pilot 2',
         name: 'Hop',
         age: '38',
-        background: 'A soldier from the water-world Frahglek, Hop came to Earth seeking salvation for his dying planet. His tech purified Earth’s oceans, earning humanity’s trust.',
+        background: 'Super solider from the water-world Frawgul', // 'A soldier from the water-world Frahglek, Hop came to Earth seeking salvation for his dying planet. His tech purified Earth’s oceans, earning humanity’s trust.',
         power: '“Second Chance” on grid overflow',
         headshot: PILOT_2,
         frames: 6,
       },
       {
-        id: 3,
+        id: 3,  
         title: 'Pilot 3',
         name: 'Reggie',
         age: '24',
-        background: 'Once a UCMA prodigy hacker, Reggie turned rebel after infecting their systems with her own virus. Now she outfits the resistance’s mechs with bleeding-edge tech.',
+        background: 'Prodigy Hacker and war-mech technician',//'Once a UCMA prodigy hacker, Reggie turned rebel after infecting their systems with her own virus. Now she outfits the resistance’s mechs with bleeding-edge tech.',
         power: 'Increased chance of energy tiles',
         headshot: PILOT_3,
         frames: 5,
@@ -130,6 +135,15 @@ useEffect(() => {
   return () => fadeAnimation.stop();
 }, [fadeAnim]);
 
+const [fontsLoaded, setFontsLoaded] = useState(false);
+useEffect(() => {
+    Font.loadAsync({
+        Sddystopian: require('../assets/fonts/Sddystopiandemo-GO7xa.otf'),
+    }).then(() => setFontsLoaded(true));
+    }, []);
+
+    if (!fontsLoaded) return null;
+
 return (
   <View style={styles.container}>
     {/* Background Images with fade animation (matches MenuScreen) */}
@@ -150,7 +164,7 @@ return (
 
     {/* Everything else stays the same */}
     <View style={styles.overlay}>
-      <Text style={styles.title}>Select Your Pilot</Text>
+      <Text style={[styles.baseText, styles.title]}>Select Your Pilot</Text>
 
       <View style={styles.list}>
         {pilots.map(p => (
@@ -165,28 +179,28 @@ return (
             </View>
 
             <View style={styles.info}>
-              <Text style={styles.pilotTitle}>{p.title}</Text>
+              <Text style={[styles.baseText, styles.pilotTitle]}>{p.title}</Text>
               <Text style={styles.line}>
-                <Text style={styles.label}>Name: </Text>
-                <Text style={styles.value}>{p.name}</Text>
+                <Text style={[styles.baseText, styles.label]}>Name: </Text>
+                <Text style={[styles.baseText, styles.value]}>{p.name}</Text>
               </Text>
               <Text style={styles.line}>
-                <Text style={styles.label}>Age: </Text>
-                <Text style={styles.value}>{p.age}</Text>
+                <Text style={[styles.baseText, styles.label]}>Age: </Text>
+                <Text style={[styles.baseText, styles.value]}>{p.age}</Text>
               </Text>
 
-              <Text style={[styles.label, { marginTop: 6 }]}>Background:</Text>
-              <Text style={styles.paragraph}>{p.background}</Text>
+              <Text style={[styles.baseText, styles.label, { marginTop: 6 }]}>Background:</Text>
+              <Text style={[styles.baseText, styles.paragraph]}>{p.background}</Text>
 
-              <Text style={[styles.label, { marginTop: 6 }]}>Power:</Text>
-              <Text style={styles.power}>{p.power}</Text>
+              <Text style={[styles.baseText, styles.label, { marginTop: 6 }]}>Power:</Text>
+              <Text style={[styles.baseText, styles.power]}>{p.power}</Text>
             </View>
           </TouchableOpacity>
         ))}
       </View>
 
       <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-        <Text style={styles.backText}>Back</Text>
+        <Text style={[styles.baseText, styles.backText]}>Back</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -202,16 +216,7 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 18,
     backgroundColor: 'rgba(0,0,0,0.25)',
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#E7FEFF',
-    marginBottom: 14,
-    textShadowColor: 'rgba(0,255,255,0.35)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    justifyContent: "center",
   },
   list: {
     alignSelf: 'center',
@@ -305,5 +310,20 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  baseText: {
+    fontFamily: 'Sddystopian',
+    color: '#E7FEFF',
+  },
+  title: {
+    fontFamily: 'Sddystopian', // optional if you spread baseText
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#E7FEFF',
+    marginBottom: 14,
+    textShadowColor: 'rgba(0,255,255,0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  
   
 });

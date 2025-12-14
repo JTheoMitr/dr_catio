@@ -415,6 +415,9 @@ const settleGravity = useCallback((gridToSettle, columns) => {
 
     // 💣 Explode a bomb after its delay
     const explodeBombAt = useCallback((bombRow, bombCol) => {
+      
+      console.log('[EXPLODE CALLED] at', bombRow, bombCol, 'cellNow=', gridRef.current?.[bombRow]?.[bombCol]);
+
       const bombKey = `${bombRow}-${bombCol}`;
     
       // Cancel this bomb's scheduled explosion if it exists
