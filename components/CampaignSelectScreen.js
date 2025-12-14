@@ -7,13 +7,11 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from 'react-native';
+import MenuBackground from './MenuBackground';
 
 const CampaignSelectScreen = ({ onBack, onSelectCampaign }) => {
   return (
-    <ImageBackground
-      source={require('../assets/backgrounds/campaign_select_bg.png')} // 🔁 update if needed
-      style={styles.background}
-      resizeMode="cover"
+    <MenuBackground
     >
       <View style={styles.overlay}>
         <View style={styles.headerRow}>
@@ -47,7 +45,7 @@ const CampaignSelectScreen = ({ onBack, onSelectCampaign }) => {
           </View>
         </View>
       </View>
-    </ImageBackground>
+    </MenuBackground>
   );
 };
 
