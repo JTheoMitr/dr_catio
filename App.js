@@ -24,6 +24,9 @@ const SWIPE_AREA_HEIGHT = 45;
 const MARGIN_PERCENT = 0.025;
 const MIN_MARGIN = 15;
 const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
+const TOP_BANNER_H = 108;
+const TOP_BANNER_W = SCREEN_WIDTH - (MARGIN * 2);
+
 
 // --- GameScreen stays almost exactly as you have it now ---
 const GameScreen = () => {
@@ -159,6 +162,20 @@ const GameScreen = () => {
         onDrop={drop}
       >
         <View style={styles.gameArea}>
+        <View style={[styles.topBanner, { height: TOP_BANNER_H }]}>
+          <AnimatedSprite animationType={animationType}>
+            <View style={RNStyleSheet.absoluteFillObject}>
+              <View style={styles.meterParallaxCenter}>
+                <ParallaxStrip
+                  source={require('./assets/foregrounds/city_layer_5.png')}
+                  windowWidth={TOP_BANNER_W}
+                  windowHeight={TOP_BANNER_H}
+                  duration={20000}
+                />
+              </View>
+            </View>
+          </AnimatedSprite>
+        </View>
           <View style={styles.gameContent}>
             {/* Left animation column */}
             <View style={styles.animationContainer}>
@@ -445,6 +462,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    paddingTop: 25,
   },
   gameContent: {
     flexDirection: 'row',
@@ -529,4 +547,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  topBanner: {
+    position: 'absolute',
+    top: 2,
+    alignSelf: 'center',
+    width: '98%',
+    borderWidth: 2,
+    borderColor: '#00ffff',
+    backgroundColor: '#151519',
+    overflow: 'hidden',
+    paddingHorizontal: MARGIN,
+  },
+  
 });
