@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Audio } from 'expo-av';
 import MenuBackground from './MenuBackground';
+import GameButton from './GameButton';
+import GameText from './GameText';
 
 const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
   // SFX for button click
@@ -102,16 +104,13 @@ const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>{'<'} Campaigns</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Campaign {campaignId}</Text>
+          <GameText style={styles.title}>Campaign {campaignId}</GameText>
           <View style={{ width: 110 }} />
         </View>
 
         {/* Stage grid */}
         <View style={styles.centerContent}>
-          <Text style={styles.subtitle}>Select Stage</Text>
+          <GameText style={styles.subtitle}>Select Stage</GameText>
 
           <View style={styles.stageGrid}>
             {Array.from({ length: 6 }).map((_, index) => {
@@ -129,10 +128,10 @@ const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.stageText}>Stage {stageNumber}</Text>
-                    <Text style={styles.stageSubText}>
+                    <GameText style={styles.stageText}>Stage {stageNumber}</GameText>
+                    <GameText style={styles.stageSubText}>
                       Levels {(stageNumber - 1) * 5 + 1}–{stageNumber * 5}
-                    </Text>
+                    </GameText>
                   </TouchableOpacity>
                 );
               }
@@ -145,12 +144,19 @@ const StageSelectScreen = ({ campaignId, onBack, onSelectStage }) => {
                   onPress={playClickSfx}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.stageText}>Stage {stageNumber}</Text>
-                  <Text style={styles.stageSubText}>Locked</Text>
+                  <GameText style={styles.stageText}>Stage {stageNumber}</GameText>
+                  <GameText style={styles.stageSubText}>Locked</GameText>
                 </TouchableOpacity>
               );
             })}
           </View>
+          <GameButton
+            title="Back"
+            variant="ghost"
+            small
+            onPress={onBack}
+            style={{ alignSelf: 'center', marginTop: 14 }}
+        />
         </View>
       </Animated.View>
     </MenuBackground>
@@ -168,7 +174,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   headerRow: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
@@ -187,6 +192,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: '700',
+    alignSelf: 'center',
   },
   centerContent: {
     flex: 1,

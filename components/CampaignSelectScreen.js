@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   headerRow: {
-    flexDirection: 'center',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 24,
@@ -81,7 +80,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
     alignSelf: 'center',
   },
