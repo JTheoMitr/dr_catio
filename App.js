@@ -12,6 +12,8 @@ import useGameState from './hooks/useGameState';
 import { GAME_STATES } from './constants/GameConstants';
 import PilotSelectionScreen from './components/PilotSelectionScreen';
 import { useFonts } from 'expo-font';
+import EnemySprite from './components/EnemySprite';
+
 
 import { Audio } from 'expo-av';
 
@@ -59,6 +61,11 @@ const GameScreen = () => {
 
   // 🔊 Hold a ref to the sound instance so we can stop/unload it on unmount
   const bgmRef = React.useRef(null);
+
+  const [bannerLayout, setBannerLayout] = useState({ width: 0, height: 0 });
+  const [mechLayout, setMechLayout] = useState(null);
+  const [enemySeed, setEnemySeed] = useState(0); // bump to respawn enemy
+
 
   // 🔊 Load + play music when GameScreen mounts
   React.useEffect(() => {
@@ -162,12 +169,14 @@ const GameScreen = () => {
         onDrop={drop}
       >
         <View style={styles.gameArea}>
-        <View style={[styles.topBanner, { height: TOP_BANNER_H }]}>
-
+        <View
+          style={[styles.topBanner, { height: TOP_BANNER_H }]}
+          onLayout={(e) => setBannerLayout(e.nativeEvent.layout)}
+        >
           {/* FULL-WIDTH PARALLAX (background) */}
           <View style={StyleSheet.absoluteFillObject}>
             <View style={styles.topBannerParallaxOffset}>
-            <ParallaxStrip
+              <ParallaxStrip
                 source={require('./assets/foregrounds/city_layer_4.png')}
                 windowWidth={TOP_BANNER_W}
                 windowHeight={TOP_BANNER_H + 74}
@@ -176,14 +185,42 @@ const GameScreen = () => {
             </View>
           </View>
 
+          {/* ENEMY LAYER (between background + foreground) */}
+          {bannerLayout.width > 0 && mechLayout && (
+            <EnemySprite
+              key={`walker-${enemySeed}`}
+              source={require('./assets/enemies/walker_1_walking_left.png')}
+              frames={16}
+              fps={10}
+              scale={1.2}                 // 👈 tune
+              speed={35}                  // 👈 px/sec tune
+              bannerWidth={bannerLayout.width}
+              bannerHeight={bannerLayout.height}
+              mechBounds={mechLayout}
+              // put enemy near bottom of banner; tune this once you see it
+              y={TOP_BANNER_H - 80}
+              onHit={() => {
+                console.log('Enemy hit mech! (-1 life later)');
+                // later: decrement life here
+              }}
+              onDespawn={() => {
+                // respawn after it hits or walks offscreen
+                setTimeout(() => setEnemySeed((s) => s + 1), 700);
+              }}
+            />
+          )}
 
           {/* FOREGROUND CONTENT */}
           <View style={styles.topBannerContent}>
-            <View style={styles.topBannerMechWindow}>
+            <View
+              style={styles.topBannerMechWindow}
+              onLayout={(e) => setMechLayout(e.nativeEvent.layout)}
+            >
               <AnimatedSprite animationType={animationType} />
             </View>
           </View>
 
+          {/* Foreground parallax layer */}
           <View style={StyleSheet.absoluteFillObject}>
             <View style={styles.topBannerParallaxOffset}>
               <ParallaxStrip
@@ -194,8 +231,8 @@ const GameScreen = () => {
               />
             </View>
           </View>
-
         </View>
+
 
           <View style={styles.gameContent}>
             {/* Left animation column */}
