@@ -163,19 +163,40 @@ const GameScreen = () => {
       >
         <View style={styles.gameArea}>
         <View style={[styles.topBanner, { height: TOP_BANNER_H }]}>
-          <AnimatedSprite animationType={animationType}>
-            <View style={RNStyleSheet.absoluteFillObject}>
-              <View style={styles.meterParallaxCenter}>
-                <ParallaxStrip
-                  source={require('./assets/foregrounds/city_layer_5.png')}
-                  windowWidth={TOP_BANNER_W}
-                  windowHeight={TOP_BANNER_H}
-                  duration={20000}
-                />
-              </View>
+
+          {/* FULL-WIDTH PARALLAX (background) */}
+          <View style={StyleSheet.absoluteFillObject}>
+            <View style={styles.topBannerParallaxOffset}>
+            <ParallaxStrip
+                source={require('./assets/foregrounds/city_layer_4.png')}
+                windowWidth={TOP_BANNER_W}
+                windowHeight={TOP_BANNER_H + 74}
+                duration={20000}
+              />
             </View>
-          </AnimatedSprite>
+          </View>
+
+
+          {/* FOREGROUND CONTENT */}
+          <View style={styles.topBannerContent}>
+            <View style={styles.topBannerMechWindow}>
+              <AnimatedSprite animationType={animationType} />
+            </View>
+          </View>
+
+          <View style={StyleSheet.absoluteFillObject}>
+            <View style={styles.topBannerParallaxOffset}>
+              <ParallaxStrip
+                source={require('./assets/foregrounds/city_layer_5.png')}
+                windowWidth={TOP_BANNER_W}
+                windowHeight={TOP_BANNER_H + 74}
+                duration={20000}
+              />
+            </View>
+          </View>
+
         </View>
+
           <View style={styles.gameContent}>
             {/* Left animation column */}
             <View style={styles.animationContainer}>
@@ -194,7 +215,7 @@ const GameScreen = () => {
                 />
               </AnimatedSprite>
 
-              <AnimatedSprite // mech animation with parallax foreground
+              {/* <AnimatedSprite // mech animation with parallax foreground
                 animationType={animationType}
               >
                 <View style={RNStyleSheet.absoluteFillObject}>
@@ -207,7 +228,7 @@ const GameScreen = () => {
                     />
                   </View>
                 </View>  
-              </AnimatedSprite>
+              </AnimatedSprite> */}
 
               {/* Level Block Meter */}
               <LevelBlockMeter level={level} size={120} />
@@ -248,7 +269,11 @@ const GameScreen = () => {
             {gameOverReason === 'energy' && (
               <Text style={styles.overlayText}>Energy depleted!</Text>
             )}
-            <Text style={styles.overlayButton} onPress={restartLevel}>
+            <Text style={styles.overlayButton} 
+                  onPress={() => {
+                    setAnimationType('default');  // ✅ immediately go back to idle
+                    restartLevel();
+                  }}>
               Try Again
             </Text>
           </View>
@@ -260,7 +285,11 @@ const GameScreen = () => {
           <View style={styles.overlayContent}>
             <Text style={styles.overlayTitle}>Level Complete!</Text>
             <Text style={styles.overlayText}>Score: {score}</Text>
-            <Text style={styles.overlayButton} onPress={nextLevel}>
+            <Text style={styles.overlayButton} 
+                  onPress={() => {
+                    setAnimationType('default');  // ✅ immediately go back to idle
+                    nextLevel();
+                  }}>
               Next Level
             </Text>
           </View>
@@ -551,12 +580,37 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     alignSelf: 'center',
-    width: '98%',
+    width: TOP_BANNER_W,
     borderWidth: 2,
     borderColor: '#00ffff',
     backgroundColor: '#151519',
     overflow: 'hidden',
-    paddingHorizontal: MARGIN,
   },
+  
+  topBannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 12,        // ⬅️ mech sits on the LEFT
+  },
+  
+  topBannerMechWindow: {
+    width: 125,             // same visual language as left column
+    height: 96,
+    borderWidth: 2,
+    borderColor: 'transparent', // was '#00ffff'
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 30,
+  },
+  topBannerParallaxOffset: {
+    position: 'absolute',
+    top: -74,   // ⬅️ raise buildings into view (tweak this)
+  },
+  
+  
   
 });

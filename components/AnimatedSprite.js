@@ -10,6 +10,7 @@ const ANIMATION_CONFIG = {
     grid: { rows: 4, cols: 4 },
     sheetWidth: 800,
     sheetHeight: 800,
+    loop: true,
   },
   match: { 
     frames: 16, 
@@ -17,6 +18,7 @@ const ANIMATION_CONFIG = {
     grid: { rows: 4, cols: 4 },
     sheetWidth: 800,
     sheetHeight: 800,
+    loop: true,
   },
   win: { 
     frames: 7, 
@@ -24,6 +26,7 @@ const ANIMATION_CONFIG = {
     grid: { rowsPerRow: [3, 3, 1] },
     sheetWidth: 600,
     sheetHeight: 600,
+    loop: true,
   },
   lose: { 
     frames: 14, 
@@ -31,6 +34,7 @@ const ANIMATION_CONFIG = {
     grid: { rowsPerRow: [4, 4, 4, 2] },
     sheetWidth: 800,
     sheetHeight: 800,
+    loop: false,
   },
   background: {
     frames: 37,
@@ -38,6 +42,7 @@ const ANIMATION_CONFIG = {
     grid: { rowsPerRow: [6, 6, 6, 6, 6, 6, 1] },
     sheetWidth: 1920,
     sheetHeight: 1183,
+    loop: true,
   },
   mechMeter: {
     frames: 54,
@@ -45,6 +50,7 @@ const ANIMATION_CONFIG = {
     grid: { rowsPerRow: [9, 9, 9, 9, 9, 9] },
     sheetWidth: 1800,
     sheetHeight: 1200,
+    loop: false,
   },
 };
 
@@ -82,11 +88,11 @@ const getFramePosition = (frameIndex, config) => {
 
 const AnimatedSprite = ({
   animationType = 'default',
-  scale = 1.0,
+  scale = 0.90,
   fps,
   resetKey,
   children,
-  loop = true,
+  loop,
   onDeplete,
 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
@@ -104,6 +110,9 @@ const AnimatedSprite = ({
 
   const config = ANIMATION_CONFIG[currentAnimation];
   if (!config) return null;
+
+  // Use config.loop unless loop prop was explicitly provided
+  const effectiveLoop = loop ?? config.loop ?? true;
 
   // Use ref to store current totalFrames to avoid stale closures in interval
   const totalFramesRef = useRef(config.frames);
@@ -134,7 +143,7 @@ const AnimatedSprite = ({
         const totalFrames = totalFramesRef.current;
         const nextFrame = prevFrame + 1;
 
-        if (loop) {
+        if (effectiveLoop) {
           // Normal looping behavior
           return nextFrame % totalFrames;
         }
@@ -165,7 +174,7 @@ const AnimatedSprite = ({
         frameIntervalRef.current = null;
       }
     };
-  }, [currentAnimation, fps, resetKey, loop, onDeplete, translateX, translateY, config]);
+  }, [currentAnimation, fps, resetKey, effectiveLoop, onDeplete, translateX, translateY, config]);
 
   // Update translateX and translateY when currentFrame changes
   useEffect(() => {
