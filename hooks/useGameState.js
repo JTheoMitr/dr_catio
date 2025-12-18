@@ -17,7 +17,8 @@ import { playSfx } from '../utils/sfx';
 
 const FALL_INTERVAL = 1000; // 1 second per fall
 
-const useGameState = () => {
+const useGameState = (options = {}) => {
+  const { onCleanMatch } = options;
   const [grid, setGrid] = useState(() => {
     const newGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
     return newGrid;
@@ -376,6 +377,7 @@ if (totalMechsDestroyed > 0) {
   } else {
     console.log('Match cleared (no mechs, no gear), Score: 25');
     playSfx('match');
+    onCleanMatch?.()
   }
 }
 

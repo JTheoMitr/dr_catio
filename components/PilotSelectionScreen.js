@@ -103,7 +103,7 @@ export default function PilotSelectionScreen({ onBack, onSelectPilot }) {
       {
         id: 3,  
         title: 'Pilot 3',
-        name: 'Reggie',
+        name: 'Mila',
         age: '24',
         background: 'Prodigy Hacker and war-mech technician',//'Once a UCMA prodigy hacker, Reggie turned rebel after infecting their systems with her own virus. Now she outfits the resistance’s mechs with bleeding-edge tech.',
         power: 'Increased chance of energy tiles',

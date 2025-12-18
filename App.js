@@ -32,6 +32,10 @@ const TOP_BANNER_W = SCREEN_WIDTH - (MARGIN * 2);
 
 // --- GameScreen stays almost exactly as you have it now ---
 const GameScreen = () => {
+  const [ammoUsed, setAmmoUsed] = useState(0);     // 0 = full, 8 = empty
+  const onCleanMatch = React.useCallback(() => {
+    setAmmoUsed((used) => Math.max(0, used - 1));
+  }, []);
   const {
     grid,
     currentGunIcon,
@@ -54,7 +58,8 @@ const GameScreen = () => {
     gameOverReason,
     effects,
     removeEffect,
-  } = useGameState();
+  } = useGameState({
+    onCleanMatch });
 
   const [animationType, setAnimationType] = useState('default');
   const matchTimerRef = React.useRef(null);
@@ -72,7 +77,7 @@ const GameScreen = () => {
   const FIRE_RATE = 1;        // bullets per second (easy knob)
 
   // gameplay state
-  const [ammoUsed, setAmmoUsed] = useState(0);     // 0 = full, 8 = empty
+ 
   const [enemyShotSeed, setEnemyShotSeed] = useState(0); // increments = “a bullet hit enemy”
   const enemyInRangeRef = React.useRef(false);
 
@@ -100,7 +105,6 @@ const GameScreen = () => {
       return next;
     });
   };
-
 
 
   // 🔊 Load + play music when GameScreen mounts
