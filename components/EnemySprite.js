@@ -13,6 +13,9 @@ export default function EnemySprite({
   mechBounds = null,
   onHit,
   onDespawn,
+  hp = 2,                 // ✅ takes 2 hits
+  damageSeed = 0,         // ✅ parent bumps this to apply 1 damage
+  onBounds,               // ✅ parent receives enemyRect
 }) {
   const [frameIndex, setFrameIndex] = useState(0);
   const [isAlive, setIsAlive] = useState(true);
@@ -41,6 +44,40 @@ export default function EnemySprite({
     sheetH > 0 &&
     spriteW > 0 &&
     spriteH > 0;
+
+  const [hpRemaining, setHpRemaining] = useState(hp);
+  const lastDamageSeedRef = useRef(damageSeed);
+
+    // reset HP on respawn (key change remounts anyway, but safe)
+    useEffect(() => {
+        setHpRemaining(hp);
+        lastDamageSeedRef.current = damageSeed; // ✅ prevents instant damage on spawn
+    }, [hp]);
+      
+
+    useEffect(() => {
+        if (!ready) return;
+        if (!isAlive) return;
+        
+      
+        // ✅ only react when damageSeed increments
+        if (damageSeed === lastDamageSeedRef.current) return;
+        lastDamageSeedRef.current = damageSeed;
+      
+        setHpRemaining((prev) => {
+          const next = prev - 1;
+      
+          if (next <= 0) {
+            setIsAlive(false);
+            onDespawn?.(); // killed by mech shots
+          }
+      
+          return next;
+        });
+      }, [damageSeed, ready, isAlive, onDespawn]);
+      
+    
+    
 
   // Frame loop
   useEffect(() => {
@@ -71,6 +108,7 @@ export default function EnemySprite({
 
       const currentX = x.__getValue();
       const enemyRect = { x: currentX, y, width: spriteW, height: spriteH };
+      onBounds?.(enemyRect);
 
     if (mechBounds) {
         const overlapX =

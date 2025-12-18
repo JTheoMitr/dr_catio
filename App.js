@@ -66,11 +66,27 @@ const GameScreen = () => {
   const [mechLayout, setMechLayout] = useState(null);
   const [enemySeed, setEnemySeed] = useState(0); // bump to respawn enemy
 
+    // ammo config
+  const AMMO_FRAMES = 9;      // 0..8
+  const MAX_AMMO_USED = AMMO_FRAMES - 1; // 8 = empty
+  const FIRE_RATE = 1;        // bullets per second (easy knob)
+
+  // gameplay state
+  const [ammoUsed, setAmmoUsed] = useState(0);     // 0 = full, 8 = empty
+  const [enemyShotSeed, setEnemyShotSeed] = useState(0); // increments = “a bullet hit enemy”
+  const enemyInRangeRef = React.useRef(false);
+
+  // track enemy bounds without rerendering every frame
+  const enemyRectRef = React.useRef(null);
+
+
     // Health meter (0 = full, MAX_HITS = empty)
   const HEALTH_FRAMES = 18;          // <-- set to your sheet's total frames
   const MAX_HITS = HEALTH_FRAMES - 1;
 
   const [hitsTaken, setHitsTaken] = useState(0);
+
+  const resetAmmo = () => setAmmoUsed(0);
 
   const onEnemyHitMech = () => {
     setHitsTaken((h) => {
@@ -166,6 +182,34 @@ const GameScreen = () => {
   }, []);
 
   React.useEffect(() => {
+    // don’t fire if banner isn't measured yet
+    if (!bannerLayout.width) return;
+  
+    const intervalMs = 1000 / FIRE_RATE;
+    const id = setInterval(() => {
+      const inRange = enemyInRangeRef.current;
+  
+      // no target or no ammo
+      if (!inRange) return;
+  
+      setAmmoUsed((used) => {
+        if (used >= MAX_AMMO_USED) return used; // empty clip
+  
+        // ✅ spend 1 bullet
+        const nextUsed = used + 1;
+  
+        // ✅ apply 1 damage to enemy
+        setEnemyShotSeed((s) => s + 1);
+  
+        return nextUsed;
+      });
+    }, intervalMs);
+  
+    return () => clearInterval(id);
+  }, [bannerLayout.width, FIRE_RATE]);
+  
+
+  React.useEffect(() => {
     if (hitsTaken >= MAX_HITS) {
       setAnimationType('lose');
       triggerMeterGameOver?.();
@@ -216,27 +260,37 @@ const GameScreen = () => {
           {/* ENEMY LAYER (between background + foreground) */}
           {bannerLayout.width > 0 && mechLayout && (
             <EnemySprite
-              key={`walker-${enemySeed}`}
-              source={require('./assets/enemies/walker_1_walking_left.png')}
-              frames={16}
-              fps={10}
-              scale={1.2}                 // 👈 tune
-              speed={35}                  // 👈 px/sec tune
-              bannerWidth={bannerLayout.width}
-              bannerHeight={bannerLayout.height}
-              mechBounds={mechLayout}
-              // put enemy near bottom of banner; tune this once you see it
-              y={TOP_BANNER_H - 80}
-              onHit={() => {
-                console.log('Enemy hit mech! (-1 life later)');
-                onEnemyHitMech();
-                // later: decrement life here
-              }}
-              onDespawn={() => {
-                // respawn after it hits or walks offscreen
-                setTimeout(() => setEnemySeed((s) => s + 1), 700);
-              }}
-            />
+            key={`walker-${enemySeed}`}
+            source={require('./assets/enemies/walker_1_walking_left.png')}
+            frames={16}
+            fps={10}
+            scale={1.2}
+            speed={35}
+            hp={2}
+            damageSeed={enemyShotSeed}
+            bannerWidth={bannerLayout.width}
+            bannerHeight={bannerLayout.height}
+            mechBounds={mechLayout}
+            y={TOP_BANNER_H - 80}
+            onBounds={(rect) => {
+              enemyRectRef.current = rect;
+          
+              // “in range” once it reaches the halfway point (x axis)
+              const midX = bannerLayout.width / 2;
+              const inRange = rect.x <= midX; // simple + matches your description
+              enemyInRangeRef.current = inRange;
+            }}
+            onHit={() => {
+              console.log('Enemy hit mech! (-1 life later)');
+              onEnemyHitMech();        // your health logic
+            }}
+            onDespawn={() => {
+              enemyInRangeRef.current = false;
+              enemyRectRef.current = null;
+              setTimeout(() => setEnemySeed((s) => s + 1), 700);
+            }}
+          />
+          
           )}
 
           {/* FOREGROUND CONTENT */}
@@ -266,6 +320,12 @@ const GameScreen = () => {
           <View style={styles.gameContent}>
             {/* Left animation column */}
             <View style={styles.animationContainer}>
+            <AnimatedSprite
+              animationType="ammoBar"
+              scale={0.25}      // tune visually
+              frame={ammoUsed}  // ✅ 0..8 (0 = full)
+            />
+
               <AnimatedSprite
                 animationType="healthBar"
                 frame={hitsTaken}
@@ -346,6 +406,8 @@ const GameScreen = () => {
                     setAnimationType('default');  // ✅ immediately go back to idle
                     restartLevel();
                     setHitsTaken(0);
+                    resetAmmo();
+
                   }}>
               Try Again
             </Text>
@@ -363,6 +425,8 @@ const GameScreen = () => {
                     setAnimationType('default');  // ✅ immediately go back to idle
                     nextLevel();
                     setHitsTaken(0);
+                    resetAmmo();
+
                   }}>
               Next Level
             </Text>

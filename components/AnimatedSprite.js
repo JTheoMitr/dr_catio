@@ -60,6 +60,15 @@ const ANIMATION_CONFIG = {
     sheetHeight: 7575,
     loop: false, // ✅ won’t matter when frame-controlled, but correct anyway
   },  
+  ammoBar: {
+    frames: 9,
+    file: require('../assets/meters/ammo_meter.png'),
+    grid: { rowsPerRow: [4, 4, 1] },   // ✅ exact layout
+    sheetWidth: 512,
+    sheetHeight: 840,
+    loop: false,
+  },
+  
   
 };
 
