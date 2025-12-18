@@ -66,6 +66,26 @@ const GameScreen = () => {
   const [mechLayout, setMechLayout] = useState(null);
   const [enemySeed, setEnemySeed] = useState(0); // bump to respawn enemy
 
+    // Health meter (0 = full, MAX_HITS = empty)
+  const HEALTH_FRAMES = 18;          // <-- set to your sheet's total frames
+  const MAX_HITS = HEALTH_FRAMES - 1;
+
+  const [hitsTaken, setHitsTaken] = useState(0);
+
+  const onEnemyHitMech = () => {
+    setHitsTaken((h) => {
+      const next = Math.min(h + 1, MAX_HITS);
+
+      if (next >= MAX_HITS) {
+        setAnimationType('lose'); // play lose anim
+        // TODO: trigger your actual "lose level" gameState if you have a function for it
+      }
+
+      return next;
+    });
+  };
+
+
 
   // 🔊 Load + play music when GameScreen mounts
   React.useEffect(() => {
@@ -145,6 +165,14 @@ const GameScreen = () => {
     };
   }, []);
 
+  React.useEffect(() => {
+    if (hitsTaken >= MAX_HITS) {
+      setAnimationType('lose');
+      triggerMeterGameOver?.();
+    }
+  }, [hitsTaken, MAX_HITS, triggerMeterGameOver]);
+  
+
   return (
     <ImageBackground
       source={require('./assets/backgrounds/stage_1_bgnd.png')}
@@ -201,6 +229,7 @@ const GameScreen = () => {
               y={TOP_BANNER_H - 80}
               onHit={() => {
                 console.log('Enemy hit mech! (-1 life later)');
+                onEnemyHitMech();
                 // later: decrement life here
               }}
               onDespawn={() => {
@@ -237,9 +266,15 @@ const GameScreen = () => {
           <View style={styles.gameContent}>
             {/* Left animation column */}
             <View style={styles.animationContainer}>
+              <AnimatedSprite
+                animationType="healthBar"
+                frame={hitsTaken}
+                scale={0.1}
+              />
+
               <AnimatedSprite // energy meter
                 animationType="mechMeter"
-                scale={0.45}
+                scale={0.35}
                 fps={1}
                 resetKey={energyUIResetCounter}  // gear matches already bump this
                 loop={false}                      // <– important: don’t loop
@@ -310,6 +345,7 @@ const GameScreen = () => {
                   onPress={() => {
                     setAnimationType('default');  // ✅ immediately go back to idle
                     restartLevel();
+                    setHitsTaken(0);
                   }}>
               Try Again
             </Text>
@@ -326,6 +362,7 @@ const GameScreen = () => {
                   onPress={() => {
                     setAnimationType('default');  // ✅ immediately go back to idle
                     nextLevel();
+                    setHitsTaken(0);
                   }}>
               Next Level
             </Text>

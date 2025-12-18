@@ -52,6 +52,15 @@ const ANIMATION_CONFIG = {
     sheetHeight: 1200,
     loop: false,
   },
+  healthBar: {
+    frames: 18, // ✅ if you truly have 0..18
+    file: require('../assets/meters/health_meter.png'),
+    grid: { rows: 5, cols: 4 }, // keep only if that is truly how the sheet is laid out
+    sheetWidth: 6060,
+    sheetHeight: 7575,
+    loop: false, // ✅ won’t matter when frame-controlled, but correct anyway
+  },  
+  
 };
 
 const DEFAULT_FPS = 5;
@@ -94,6 +103,7 @@ const AnimatedSprite = ({
   children,
   loop,
   onDeplete,
+  frame,
 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -122,59 +132,76 @@ const AnimatedSprite = ({
 
   useEffect(() => {
     if (!config) return;
-
+  
     // Clear any existing interval
     if (frameIntervalRef.current) {
       clearInterval(frameIntervalRef.current);
       frameIntervalRef.current = null;
     }
-
+  
+    // ✅ If this sprite is "frame-controlled", do NOT animate on a timer.
+    if (typeof frame === 'number') {
+      depletedRef.current = false;
+      const totalFrames = totalFramesRef.current;
+      const clamped = Math.max(0, Math.min(frame, totalFrames - 1));
+      setCurrentFrame(clamped);
+      return;
+    }
+  
     // Reset frame & transforms when animation / fps / resetKey changes
     setCurrentFrame(0);
     translateX.setValue(0);
     translateY.setValue(0);
     depletedRef.current = false;
-
+  
     const effectiveFps = fps ?? config.fps ?? DEFAULT_FPS;
     const frameDuration = 1000 / effectiveFps;
-
+  
     const updateFrame = () => {
       setCurrentFrame(prevFrame => {
         const totalFrames = totalFramesRef.current;
         const nextFrame = prevFrame + 1;
-
+  
         if (effectiveLoop) {
-          // Normal looping behavior
           return nextFrame % totalFrames;
         }
-
-        // Non-looping behavior: advance until last frame, then call onDeplete once and freeze
+  
         if (nextFrame >= totalFrames) {
           if (!depletedRef.current) {
             depletedRef.current = true;
             onDeplete && onDeplete();
           }
-          // Stop the interval so we don't keep scheduling updates
           if (frameIntervalRef.current) {
             clearInterval(frameIntervalRef.current);
             frameIntervalRef.current = null;
           }
-          return totalFrames - 1; // stay on last frame
+          return totalFrames - 1;
         }
-
+  
         return nextFrame;
       });
     };
-
+  
     frameIntervalRef.current = setInterval(updateFrame, frameDuration);
-
+  
     return () => {
       if (frameIntervalRef.current) {
         clearInterval(frameIntervalRef.current);
         frameIntervalRef.current = null;
       }
     };
-  }, [currentAnimation, fps, resetKey, effectiveLoop, onDeplete, translateX, translateY, config]);
+  }, [
+    currentAnimation,
+    fps,
+    resetKey,
+    effectiveLoop,
+    onDeplete,
+    translateX,
+    translateY,
+    config,
+    frame, // ✅ include so changes re-render the frame
+  ]);
+  
 
   // Update translateX and translateY when currentFrame changes
   useEffect(() => {

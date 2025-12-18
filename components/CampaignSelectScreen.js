@@ -25,20 +25,20 @@ const CampaignSelectScreen = ({ onBack, onSelectCampaign }) => {
             style={[styles.campaignButton, styles.campaignActive]}
             onPress={() => onSelectCampaign(1)}
           >
-            <Text style={styles.campaignTitle}>Campaign 1</Text>
-            <Text style={styles.campaignSubtitle}>Main Story</Text>
+            <GameText style={styles.campaignTitle}>Campaign 1</GameText>
+            <GameText style={styles.campaignSubtitle}>Main Story</GameText>
           </TouchableOpacity>
 
           {/* Campaign 2 - inactive / locked */}
           <View style={[styles.campaignButton, styles.campaignDisabled]}>
-            <Text style={styles.campaignTitle}>Campaign 2</Text>
-            <Text style={styles.campaignSubtitle}>Coming Soon</Text>
+            <GameText style={styles.campaignTitle}>Campaign 2</GameText>
+            <GameText style={styles.campaignSubtitle}>Coming Soon</GameText>
           </View>
 
           {/* Campaign 3 - inactive / locked */}
           <View style={[styles.campaignButton, styles.campaignDisabled]}>
-            <Text style={styles.campaignTitle}>Campaign 3</Text>
-            <Text style={styles.campaignSubtitle}>Coming Soon</Text>
+            <GameText style={styles.campaignTitle}>Campaign 3</GameText>
+            <GameText style={styles.campaignSubtitle}>Coming Soon</GameText>
           </View>
           <GameButton
         title="Back"
