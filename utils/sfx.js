@@ -23,6 +23,10 @@ const SOUND_CONFIG = {
     file: require('../assets/sfx/DSGNTonl_Anime_Cartoon_Comedy_13_ROXY_SOUND_ACE-energy.mp3'),
     volume: 0.9,
   },
+  explosion: {
+    file: require('../assets/sfx/EXPLReal_Foley Explosion Distant Firework Muffled Boom 03_ESM_HALG.mp3'),
+    volume: 1.0,
+  }
 };
 
 // 🔁 Cache of loaded sounds so we only load each once

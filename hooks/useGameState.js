@@ -227,7 +227,7 @@ const useGameState = (options = {}) => {
             type: 'bomb',
             color: COLORS.BOMB,
           };
-          // Schedule delayed explosion
+          // Schedule delayed explosion // play sfx here?
           scheduleBombExplosion(row, col);
         }
       });
@@ -419,7 +419,7 @@ const settleGravity = useCallback((gridToSettle, columns) => {
     const explodeBombAt = useCallback((bombRow, bombCol) => {
       
       console.log('[EXPLODE CALLED] at', bombRow, bombCol, 'cellNow=', gridRef.current?.[bombRow]?.[bombCol]);
-
+      playSfx('explosion');
       const bombKey = `${bombRow}-${bombCol}`;
     
       // Cancel this bomb's scheduled explosion if it exists
