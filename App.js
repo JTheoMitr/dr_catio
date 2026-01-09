@@ -59,7 +59,8 @@ const GameScreen = () => {
     effects,
     removeEffect,
   } = useGameState({
-    onCleanMatch });
+    onCleanMatch
+  });
 
   const [animationType, setAnimationType] = useState('default');
   const matchTimerRef = React.useRef(null);
@@ -71,13 +72,13 @@ const GameScreen = () => {
   const [mechLayout, setMechLayout] = useState(null);
   const [enemySeed, setEnemySeed] = useState(0); // bump to respawn enemy
 
-    // ammo config
+  // ammo config
   const AMMO_FRAMES = 9;      // 0..8
   const MAX_AMMO_USED = AMMO_FRAMES - 1; // 8 = empty
   const FIRE_RATE = 1;        // bullets per second (easy knob)
 
   // gameplay state
- 
+
   const [enemyShotSeed, setEnemyShotSeed] = useState(0); // increments = “a bullet hit enemy”
   const enemyInRangeRef = React.useRef(false);
 
@@ -85,7 +86,7 @@ const GameScreen = () => {
   const enemyRectRef = React.useRef(null);
 
 
-    // Health meter (0 = full, MAX_HITS = empty)
+  // Health meter (0 = full, MAX_HITS = empty)
   const HEALTH_FRAMES = 18;          // <-- set to your sheet's total frames
   const MAX_HITS = HEALTH_FRAMES - 1;
 
@@ -188,30 +189,30 @@ const GameScreen = () => {
   React.useEffect(() => {
     // don’t fire if banner isn't measured yet
     if (!bannerLayout.width) return;
-  
+
     const intervalMs = 1000 / FIRE_RATE;
     const id = setInterval(() => {
       const inRange = enemyInRangeRef.current;
-  
+
       // no target or no ammo
       if (!inRange) return;
-  
+
       setAmmoUsed((used) => {
         if (used >= MAX_AMMO_USED) return used; // empty clip
-  
+
         // ✅ spend 1 bullet
         const nextUsed = used + 1;
-  
+
         // ✅ apply 1 damage to enemy
         setEnemyShotSeed((s) => s + 1);
-  
+
         return nextUsed;
       });
     }, intervalMs);
-  
+
     return () => clearInterval(id);
   }, [bannerLayout.width, FIRE_RATE]);
-  
+
 
   React.useEffect(() => {
     if (hitsTaken >= MAX_HITS) {
@@ -219,7 +220,7 @@ const GameScreen = () => {
       triggerMeterGameOver?.();
     }
   }, [hitsTaken, MAX_HITS, triggerMeterGameOver]);
-  
+
 
   return (
     <ImageBackground
@@ -228,216 +229,201 @@ const GameScreen = () => {
       resizeMode="cover"
     >
 
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Level: {level}</Text>
-        <Text style={styles.headerText}>Score: {score}</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
 
-      {/* Game Area with Animation and Grid */}
-      <TouchControls
-        onMoveLeft={moveLeft}
-        onMoveRight={moveRight}
-        onRotate={rotate}
-        onDrop={drop}
-      >
-        <View style={styles.gameArea}>
-        <View
-          style={[styles.topBanner, { height: TOP_BANNER_H }]}
-          onLayout={(e) => setBannerLayout(e.nativeEvent.layout)}
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Level: {level}</Text>
+          <Text style={styles.headerText}>Score: {score}</Text>
+        </View>
+
+        {/* Game Area with Animation and Grid */}
+        <TouchControls
+          onMoveLeft={moveLeft}
+          onMoveRight={moveRight}
+          onRotate={rotate}
+          onDrop={drop}
         >
-          {/* FULL-WIDTH PARALLAX (background) */}
-          <View style={StyleSheet.absoluteFillObject}>
-            <View style={styles.topBannerParallaxOffset}>
-              <ParallaxStrip
-                source={require('./assets/foregrounds/city_layer_4.png')}
-                windowWidth={TOP_BANNER_W}
-                windowHeight={TOP_BANNER_H + 74}
-                duration={20000}
-              />
-            </View>
-          </View>
-
-          {/* ENEMY LAYER (between background + foreground) */}
-          {bannerLayout.width > 0 && mechLayout && (
-            <EnemySprite
-            key={`walker-${enemySeed}`}
-            source={require('./assets/enemies/walker_1_walking_left.png')}
-            frames={16}
-            fps={10}
-            scale={1.2}
-            speed={35}
-            hp={2}
-            damageSeed={enemyShotSeed}
-            bannerWidth={bannerLayout.width}
-            bannerHeight={bannerLayout.height}
-            mechBounds={mechLayout}
-            y={TOP_BANNER_H - 80}
-            onBounds={(rect) => {
-              enemyRectRef.current = rect;
-          
-              // “in range” once it reaches the halfway point (x axis)
-              const midX = bannerLayout.width / 2;
-              const inRange = rect.x <= midX; // simple + matches your description
-              enemyInRangeRef.current = inRange;
-            }}
-            onHit={() => {
-              console.log('Enemy hit mech! (-1 life later)');
-              onEnemyHitMech();        // your health logic
-            }}
-            onDespawn={() => {
-              enemyInRangeRef.current = false;
-              enemyRectRef.current = null;
-              setTimeout(() => setEnemySeed((s) => s + 1), 700);
-            }}
-          />
-          
-          )}
-
-          {/* FOREGROUND CONTENT */}
-          <View style={styles.topBannerContent}>
+          <View style={styles.gameArea}>
             <View
-              style={styles.topBannerMechWindow}
-              onLayout={(e) => setMechLayout(e.nativeEvent.layout)}
+              style={[styles.topBanner, { height: TOP_BANNER_H }]}
+              onLayout={(e) => setBannerLayout(e.nativeEvent.layout)}
             >
-              <AnimatedSprite animationType={animationType} />
-            </View>
-          </View>
+              {/* FULL-WIDTH PARALLAX (background) */}
+              <View style={StyleSheet.absoluteFillObject}>
+                <View style={styles.topBannerParallaxOffset}>
+                  <ParallaxStrip
+                    source={require('./assets/foregrounds/city_layer_4.png')}
+                    windowWidth={TOP_BANNER_W}
+                    windowHeight={TOP_BANNER_H + 74}
+                    duration={20000}
+                  />
+                </View>
+              </View>
 
-          {/* Foreground parallax layer */}
-          <View style={StyleSheet.absoluteFillObject}>
-            <View style={styles.topBannerParallaxOffset}>
-              <ParallaxStrip
-                source={require('./assets/foregrounds/city_layer_5.png')}
-                windowWidth={TOP_BANNER_W}
-                windowHeight={TOP_BANNER_H + 74}
-                duration={20000}
-              />
-            </View>
-          </View>
-        </View>
+              {/* ENEMY LAYER (between background + foreground) */}
+              {bannerLayout.width > 0 && mechLayout && (
+                <EnemySprite
+                  key={`walker-${enemySeed}`}
+                  source={require('./assets/enemies/walker_1_walking_left.png')}
+                  frames={16}
+                  fps={10}
+                  scale={1.2}
+                  speed={35}
+                  hp={2}
+                  damageSeed={enemyShotSeed}
+                  bannerWidth={bannerLayout.width}
+                  bannerHeight={bannerLayout.height}
+                  mechBounds={mechLayout}
+                  y={TOP_BANNER_H - 80}
+                  onBounds={(rect) => {
+                    enemyRectRef.current = rect;
 
-
-          <View style={styles.gameContent}>
-            {/* Left animation column */}
-            <View style={styles.animationContainer}>
-            <AnimatedSprite
-              animationType="ammoBar"
-              scale={0.25}      // tune visually
-              frame={ammoUsed}  // ✅ 0..8 (0 = full)
-            />
-
-              <AnimatedSprite
-                animationType="healthBar"
-                frame={hitsTaken}
-                scale={0.1}
-              />
-
-              <AnimatedSprite // energy meter
-                animationType="mechMeter"
-                scale={0.35}
-                fps={1}
-                resetKey={energyUIResetCounter}  // gear matches already bump this
-                loop={false}                      // <– important: don’t loop
-                onDeplete={triggerMeterGameOver}  // <– call into game logic
-              >
-                <RotatingOverlaySprite
-                  source={require('./assets/crosshair.png')}
-                  sizePercent={0.5}
-                  duration={3000}
+                    // “in range” once it reaches the halfway point (x axis)
+                    const midX = bannerLayout.width / 2;
+                    const inRange = rect.x <= midX; // simple + matches your description
+                    enemyInRangeRef.current = inRange;
+                  }}
+                  onHit={() => {
+                    console.log('Enemy hit mech! (-1 life later)');
+                    onEnemyHitMech();        // your health logic
+                  }}
+                  onDespawn={() => {
+                    enemyInRangeRef.current = false;
+                    enemyRectRef.current = null;
+                    setTimeout(() => setEnemySeed((s) => s + 1), 700);
+                  }}
                 />
-              </AnimatedSprite>
 
-              {/* <AnimatedSprite // mech animation with parallax foreground
-                animationType={animationType}
-              >
-                <View style={RNStyleSheet.absoluteFillObject}>
-                  <View style={styles.meterParallaxCenter}>
-                    <ParallaxStrip
-                      source={require('./assets/foregrounds/city_layer_5.png')}
-                      windowWidth={192}
-                      windowHeight={108}
-                      duration={20000}
-                    />
+              )}
+
+              {/* FOREGROUND CONTENT */}
+              <View style={styles.topBannerContent}>
+                <View
+                  style={styles.topBannerMechWindow}
+                  onLayout={(e) => setMechLayout(e.nativeEvent.layout)}
+                >
+                  <AnimatedSprite animationType={animationType} />
+                </View>
+              </View>
+
+              {/* Foreground parallax layer */}
+              <View style={StyleSheet.absoluteFillObject}>
+                <View style={styles.topBannerParallaxOffset}>
+                  <ParallaxStrip
+                    source={require('./assets/foregrounds/city_layer_5.png')}
+                    windowWidth={TOP_BANNER_W}
+                    windowHeight={TOP_BANNER_H + 74}
+                    duration={20000}
+                  />
+                </View>
+              </View>
+            </View>
+
+
+            <View style={styles.gameContent}>
+              {/* Left animation column */}
+              <View style={styles.animationContainer}>
+                <View style={styles.hudLayer}>
+                  <View style={[styles.hudItem, { top: 192, left: -12, zIndex: 3 }]}>
+                    <AnimatedSprite animationType="ammoBar" scale={0.35} frame={ammoUsed} />
                   </View>
-                </View>  
-              </AnimatedSprite> */}
 
-              {/* Level Block Meter */}
-              <LevelBlockMeter level={level} size={120} />
+                  <View style={[styles.hudItem, { top: 5, left: 0, zIndex: 1 }]}>
+                    <AnimatedSprite animationType="healthBar" scale={0.18} frame={hitsTaken} />
+                  </View>
+                </View>
+                <View style={[styles.hudItem, { top: -64, left: 2, zIndex: 2 }]}>
+                  <AnimatedSprite // energy meter
+                    animationType="mechMeter"
+                    scale={0.25}
+                    fps={1}
+                    resetKey={energyUIResetCounter}  // gear matches already bump this
+                    loop={false}                      // <– important: don’t loop
+                    onDeplete={triggerMeterGameOver}  // <– call into game logic
+                  >
+                    <RotatingOverlaySprite
+                      source={require('./assets/crosshair.png')}
+                      sizePercent={0.5}
+                      duration={3000}
+                    />
+                  </AnimatedSprite>
 
+                  {/* Level Block Meter */}
+                  <View style={styles.levelBlockSlot}>
+                    <LevelBlockMeter level={level} size={120} />
+                  </View>
+                </View>
+              </View>
+
+              {/* Grid on the right */}
+              <View style={styles.gridContainer}>
+                <GameGrid
+                  grid={grid}
+                  currentGunIcon={currentGunIcon}
+                  gunIconPosition={gunIconPosition}
+                  particles={particles}
+                  onRemoveParticle={removeParticle}
+                  effects={effects}
+                  onRemoveEffect={removeEffect}
+                />
+              </View>
             </View>
-            
-            {/* Grid on the right */}
-            <View style={styles.gridContainer}>
-              <GameGrid
-                grid={grid}
-                currentGunIcon={currentGunIcon}
-                gunIconPosition={gunIconPosition}
-                particles={particles}
-                onRemoveParticle={removeParticle}
-                effects={effects}
-                onRemoveEffect={removeEffect}
-              />
+          </View>
+        </TouchControls>
+
+        {/* Swipe Area (bottom padding) */}
+        <View style={[styles.swipeArea, { height: SWIPE_AREA_HEIGHT }]}>
+          <Text style={styles.swipeAreaText}>
+            Swipe to move • Tap to rotate • Swipe down to drop
+          </Text>
+        </View>
+
+        {/* Game Over / Level Complete Overlay */}
+        {gameState === GAME_STATES.GAME_OVER && (
+          <View style={styles.overlay}>
+            <View style={styles.overlayContent}>
+              <Text style={styles.overlayTitle}>Game Over!</Text>
+              <Text style={styles.overlayText}>Final Score: {score}</Text>
+              <Text style={styles.overlayText}>Level Reached: {level}</Text>
+
+              {gameOverReason === 'energy' && (
+                <Text style={styles.overlayText}>Energy depleted!</Text>
+              )}
+              <Text style={styles.overlayButton}
+                onPress={() => {
+                  setAnimationType('default');  // ✅ immediately go back to idle
+                  restartLevel();
+                  setHitsTaken(0);
+                  resetAmmo();
+
+                }}>
+                Try Again
+              </Text>
             </View>
           </View>
-        </View>
-      </TouchControls>
+        )}
 
-      {/* Swipe Area (bottom padding) */}
-      <View style={[styles.swipeArea, { height: SWIPE_AREA_HEIGHT }]}>
-        <Text style={styles.swipeAreaText}>
-          Swipe to move • Tap to rotate • Swipe down to drop
-        </Text>
-      </View>
+        {gameState === GAME_STATES.LEVEL_COMPLETE && (
+          <View style={styles.overlay}>
+            <View style={styles.overlayContent}>
+              <Text style={styles.overlayTitle}>Level Complete!</Text>
+              <Text style={styles.overlayText}>Score: {score}</Text>
+              <Text style={styles.overlayButton}
+                onPress={() => {
+                  setAnimationType('default');  // ✅ immediately go back to idle
+                  nextLevel();
+                  setHitsTaken(0);
+                  resetAmmo();
 
-      {/* Game Over / Level Complete Overlay */}
-      {gameState === GAME_STATES.GAME_OVER && (
-        <View style={styles.overlay}>
-          <View style={styles.overlayContent}>
-            <Text style={styles.overlayTitle}>Game Over!</Text>
-            <Text style={styles.overlayText}>Final Score: {score}</Text>
-            <Text style={styles.overlayText}>Level Reached: {level}</Text>
-
-            {gameOverReason === 'energy' && (
-              <Text style={styles.overlayText}>Energy depleted!</Text>
-            )}
-            <Text style={styles.overlayButton} 
-                  onPress={() => {
-                    setAnimationType('default');  // ✅ immediately go back to idle
-                    restartLevel();
-                    setHitsTaken(0);
-                    resetAmmo();
-
-                  }}>
-              Try Again
-            </Text>
+                }}>
+                Next Level
+              </Text>
+            </View>
           </View>
-        </View>
-      )}
-
-      {gameState === GAME_STATES.LEVEL_COMPLETE && (
-        <View style={styles.overlay}>
-          <View style={styles.overlayContent}>
-            <Text style={styles.overlayTitle}>Level Complete!</Text>
-            <Text style={styles.overlayText}>Score: {score}</Text>
-            <Text style={styles.overlayButton} 
-                  onPress={() => {
-                    setAnimationType('default');  // ✅ immediately go back to idle
-                    nextLevel();
-                    setHitsTaken(0);
-                    resetAmmo();
-
-                  }}>
-              Next Level
-            </Text>
-          </View>
-        </View>
-      )}
-    </SafeAreaView>
+        )}
+      </SafeAreaView>
     </ImageBackground>
   );
 };
@@ -454,62 +440,62 @@ export default function App() {
   // 🔊 Menu / meta-screen music
   const menuBgmRef = React.useRef(null);
 
-    // 🔊 Handle menu / campaign / stage music
-    React.useEffect(() => {
-      let isMounted = true;
-  
-      const updateMenuMusic = async () => {
-        try {
-          // When we're IN GAME, stop menu music
-          if (currentScreen === 'game') {
-            if (menuBgmRef.current) {
-              const status = await menuBgmRef.current.getStatusAsync();
-              if (status.isLoaded && status.isPlaying) {
-                await menuBgmRef.current.stopAsync();
-              }
+  // 🔊 Handle menu / campaign / stage music
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const updateMenuMusic = async () => {
+      try {
+        // When we're IN GAME, stop menu music
+        if (currentScreen === 'game') {
+          if (menuBgmRef.current) {
+            const status = await menuBgmRef.current.getStatusAsync();
+            if (status.isLoaded && status.isPlaying) {
+              await menuBgmRef.current.stopAsync();
             }
+          }
+          return;
+        }
+
+        // For all non-game screens (menu, campaignSelect, stageSelect):
+        if (!menuBgmRef.current) {
+          // Load + play menu track
+          await Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+          });
+
+          const { sound } = await Audio.Sound.createAsync(
+            require('./assets/music/SMMOG_Menu_1.mp3')
+          );
+
+          if (!isMounted) {
+            await sound.unloadAsync();
             return;
           }
-  
-          // For all non-game screens (menu, campaignSelect, stageSelect):
-          if (!menuBgmRef.current) {
-            // Load + play menu track
-            await Audio.setAudioModeAsync({
-              playsInSilentModeIOS: true,
-            });
-  
-            const { sound } = await Audio.Sound.createAsync(
-              require('./assets/music/SMMOG_Menu_1.mp3')
-            );
-  
-            if (!isMounted) {
-              await sound.unloadAsync();
-              return;
-            }
-  
-            menuBgmRef.current = sound;
-            await sound.setIsLoopingAsync(true);
-            await sound.playAsync();
-          } else {
-            // If it's already loaded but not playing, resume it
-            const status = await menuBgmRef.current.getStatusAsync();
-            if (status.isLoaded && !status.isPlaying) {
-              await menuBgmRef.current.playAsync();
-            }
-          }
-        } catch (e) {
-          console.warn('Error handling menu music', e);
-        }
-      };
-  
-      updateMenuMusic();
-  
-      return () => {
-        isMounted = false;
-      };
-    }, [currentScreen, menuBgmRef]);
 
-      // Optional: cleanup menu music on app unmount
+          menuBgmRef.current = sound;
+          await sound.setIsLoopingAsync(true);
+          await sound.playAsync();
+        } else {
+          // If it's already loaded but not playing, resume it
+          const status = await menuBgmRef.current.getStatusAsync();
+          if (status.isLoaded && !status.isPlaying) {
+            await menuBgmRef.current.playAsync();
+          }
+        }
+      } catch (e) {
+        console.warn('Error handling menu music', e);
+      }
+    };
+
+    updateMenuMusic();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentScreen, menuBgmRef]);
+
+  // Optional: cleanup menu music on app unmount
   React.useEffect(() => {
     return () => {
       if (menuBgmRef.current) {
@@ -552,20 +538,20 @@ export default function App() {
   }
 
   // Pilot select
-if (currentScreen === 'pilotSelect') {
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
-      <PilotSelectionScreen
-        onBack={() => setCurrentScreen('menu')}
-        onSelectPilot={(pilotId) => {
-          setSelectedPilot(pilotId);
-          setCurrentScreen('campaignSelect');
-        }}
-      />
-    </SafeAreaView>
-  );
-}
+  if (currentScreen === 'pilotSelect') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="auto" />
+        <PilotSelectionScreen
+          onBack={() => setCurrentScreen('menu')}
+          onSelectPilot={(pilotId) => {
+            setSelectedPilot(pilotId);
+            setCurrentScreen('campaignSelect');
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
 
 
   // Campaign select
@@ -645,16 +631,14 @@ const styles = StyleSheet.create({
   animationContainer: {
     width: 125,
     height: GRID_HEIGHT_WITH_BORDERS,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 2,
     borderColor: '#00ffff',
     backgroundColor: '#151519',
     overflow: 'hidden',
     marginRight: 2,
-    marginLeft: 0,
+    position: 'relative',      // ✅ important
   },
+
   gridContainer: {
     flex: 0,
     justifyContent: 'center',
@@ -728,14 +712,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#151519',
     overflow: 'hidden',
   },
-  
+
   topBannerContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 12,        // ⬅️ mech sits on the LEFT
   },
-  
+
   topBannerMechWindow: {
     width: 125,             // same visual language as left column
     height: 96,
@@ -752,7 +736,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -74,   // ⬅️ raise buildings into view (tweak this)
   },
-  
-  
-  
+
+
+
 });
