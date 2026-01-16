@@ -68,6 +68,14 @@ const ANIMATION_CONFIG = {
     sheetHeight: 840,
     loop: false,
   },
+ selectPilot: {
+    frames: 5,
+    file: require('../assets/dialogue-headshots/Pilot_3.png'),
+    grid: { rowsPerRow: [5] },   // ✅ exact layout
+    sheetWidth: 320,
+    sheetHeight: 64,
+    loop: true,
+  },
   
   
 };

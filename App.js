@@ -326,15 +326,19 @@ const GameScreen = () => {
               {/* Left animation column */}
               <View style={styles.animationContainer}>
                 <View style={styles.hudLayer}>
-                  <View style={[styles.hudItem, { top: 192, left: -12, zIndex: 3 }]}>
+                <View style={[styles.hudItem, { top: 35, left: 0, zIndex: 3 }]}>
+                    <AnimatedSprite animationType="selectPilot" scale={1.3} />
+                  </View>
+                  
+                  <View style={[styles.hudItem, { top: 157, left: -12, zIndex: 3 }]}>
                     <AnimatedSprite animationType="ammoBar" scale={0.35} frame={ammoUsed} />
                   </View>
 
-                  <View style={[styles.hudItem, { top: 5, left: 0, zIndex: 1 }]}>
+                  <View style={[styles.hudItem, { top: -30, left: 0, zIndex: 1 }]}>
                     <AnimatedSprite animationType="healthBar" scale={0.18} frame={hitsTaken} />
                   </View>
                 </View>
-                <View style={[styles.hudItem, { top: -64, left: 2, zIndex: 2 }]}>
+                <View style={[styles.hudItem, { top: -100, left: 2, zIndex: 2 }]}>
                   <AnimatedSprite // energy meter
                     animationType="mechMeter"
                     scale={0.25}
