@@ -326,7 +326,7 @@ const GameScreen = () => {
               {/* Left animation column */}
               <View style={styles.animationContainer}>
                 <View style={styles.hudLayer}>
-                <View style={[styles.hudItem, { top: 35, left: 0, zIndex: 3 }]}>
+                <View style={[styles.hudItem, { top: 5, left: 0, zIndex: 3 }]}>
                     <AnimatedSprite animationType="selectPilot" scale={1.3} />
                   </View>
                   
