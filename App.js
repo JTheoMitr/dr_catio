@@ -28,11 +28,14 @@ const MIN_MARGIN = 15;
 const MARGIN = Math.max(SCREEN_WIDTH * MARGIN_PERCENT, MIN_MARGIN);
 const TOP_BANNER_H = 108;
 const TOP_BANNER_W = SCREEN_WIDTH - (MARGIN * 2);
+// const pilotAnimType = `pilot${selectedPilot}_default`;
 
 
 // --- GameScreen stays almost exactly as you have it now ---
-const GameScreen = () => {
+const GameScreen = ({selectedPilot}) => {
+  const pilotAnimType = `pilot${selectedPilot}_default`;
   const [ammoUsed, setAmmoUsed] = useState(0);     // 0 = full, 8 = empty
+
   const onCleanMatch = React.useCallback(() => {
     setAmmoUsed((used) => Math.max(0, used - 1));
   }, []);
@@ -97,6 +100,7 @@ const GameScreen = () => {
   const onEnemyHitMech = () => {
     setHitsTaken((h) => {
       const next = Math.min(h + 1, MAX_HITS);
+      console.log("onEnemyMechHit")
 
       if (next >= MAX_HITS) {
         setAnimationType('lose'); // play lose anim
@@ -326,8 +330,9 @@ const GameScreen = () => {
               {/* Left animation column */}
               <View style={styles.animationContainer}>
                 <View style={styles.hudLayer}>
+
                 <View style={[styles.hudItem, { top: 5, left: 0, zIndex: 3 }]}>
-                    <AnimatedSprite animationType="selectPilot" scale={1.3} />
+                    <AnimatedSprite animationType={pilotAnimType} scale={1.3} />
                   </View>
                   
                   <View style={[styles.hudItem, { top: 157, left: -12, zIndex: 3 }]}>
@@ -439,6 +444,7 @@ export default function App() {
   const [selectedCampaign, setSelectedCampaign] = useState(1);
   const [selectedStage, setSelectedStage] = useState(1);
   const [selectedPilot, setSelectedPilot] = useState(1);
+ 
 
 
   // 🔊 Menu / meta-screen music
@@ -550,13 +556,15 @@ export default function App() {
           onBack={() => setCurrentScreen('menu')}
           onSelectPilot={(pilotId) => {
             setSelectedPilot(pilotId);
+            console.log(pilotId)
             setCurrentScreen('campaignSelect');
+           
           }}
         />
       </SafeAreaView>
+      
     );
   }
-
 
   // Campaign select
   if (currentScreen === 'campaignSelect') {
@@ -587,7 +595,7 @@ export default function App() {
 
   // Game
   if (currentScreen === 'game') {
-    return <GameScreen />;
+    return <GameScreen selectedPilot={selectedPilot} />;
   }
 
   // Fallback

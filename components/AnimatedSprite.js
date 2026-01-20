@@ -68,10 +68,26 @@ const ANIMATION_CONFIG = {
     sheetHeight: 840,
     loop: false,
   },
- selectPilot: {
+  pilot1_default: {
+    frames: 6,
+    file: require('../assets/animations/mechpit/pilot_1_in_mechpit_default.png'),
+    grid: { rowsPerRow: [2, 2, 2] },
+    sheetWidth: 256,
+    sheetHeight: 288,
+    loop: true,
+  },
+  pilot2_default: {
+    frames: 6,
+    file: require('../assets/animations/mechpit/pilot_2_in_mechpit_default.png'),
+    grid: { rowsPerRow: [2, 2, 2] },
+    sheetWidth: 256,
+    sheetHeight: 288,
+    loop: true,
+  },
+  pilot3_default: {
     frames: 6,
     file: require('../assets/animations/mechpit/pilot_3_in_mechpit_default.png'),
-    grid: { rowsPerRow: [2, 2, 2] },   // ✅ exact layout
+    grid: { rowsPerRow: [2, 2, 2] },
     sheetWidth: 256,
     sheetHeight: 288,
     loop: true,
